@@ -307,14 +307,9 @@ function buildModes(){
   const mistakes=getMistakes();
   const modes=[
     {id:'mix',title:'Микс',count:10},
-    {id:'marathon',title:'Марафон',count:BANK.length}
+    {id:'marathon',title:'Марафон',count:BANK.length},
+    {id:'mistakes',title:'Работа над ошибками',count:mistakes.length,disabled:mistakes.length===0}
   ];
-  const cats=[...new Set(BANK.map(q=>q.c))];
-  cats.forEach(cat=>{
-    const count=BANK.filter(q=>q.c===cat).length;
-    modes.push({id:'cat_'+cat,title:'Категория: '+cat,count});
-  });
-  modes.push({id:'mistakes',title:'Работа над ошибками',count:mistakes.length,disabled:mistakes.length===0});
   const list=$('modeList');
   list.innerHTML=modes.map(m=>
     '<button class="mode-btn'+(m.id===currentMode?' active':'')+'" data-mode="'+m.id+'"'+(m.disabled?' disabled':'')+' onclick="selectMode(\''+m.id+'\')">'+
@@ -378,9 +373,6 @@ function startQuiz(){
   }else if(currentMode==='mistakes'){
     const mistakes=getMistakes();
     pool=shuffle(BANK.filter(q=>mistakes.includes(q.q)));
-  }else{
-    const cat=currentMode.replace('cat_','');
-    pool=shuffle(BANK.filter(q=>q.c===cat));
   }
   quiz.items=pool.map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
   quiz.idx=0;quiz.score=0;quiz.answered=false;
