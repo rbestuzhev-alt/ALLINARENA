@@ -102,6 +102,13 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
   background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--text); cursor:pointer; margin-bottom:10px; transition:.15s}
 .mode-btn:hover:not(:disabled):not(.mix-primary){border-color:rgba(230,73,128,.5); transform:translateY(-1px); background:rgba(230,73,128,.07)}
 .mode-btn.active{background:rgba(230,73,128,.07); border-color:rgba(230,73,128,.5)}
+.mode-btn-secondary{margin-top:24px; padding:12px 16px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06)}
+.mode-btn-secondary .mode-title{color:#9b8b93; font-size:14px}
+.mode-btn-secondary .mode-count{color:#9b8b93; font-size:12px}
+.mode-btn-secondary:hover:not(:disabled){border-color:rgba(230,73,128,.35); transform:none; background:rgba(255,255,255,.02)}
+.mode-btn-secondary.active{background:rgba(230,73,128,.07); border-color:rgba(230,73,128,.5)}
+.mode-btn-secondary.active .mode-title{color:var(--text)}
+.mode-btn-secondary.active .mode-count{color:#9b8b93}
 .btn-soft{width:100%; border:1px solid var(--line); border-radius:18px; padding:16px; cursor:pointer; font-family:inherit;
   font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:.07em; font-size:14px;
   background:var(--card); color:var(--pink); transition:transform .15s, border-color .2s, background .2s}
@@ -356,10 +363,12 @@ function buildModes(){
   list.innerHTML=modes.map(m=>{
     const isActive=m.id===currentMode;
     const isMixPrimary=m.isMix && isActive;
+    const isSecondary=m.id==='mistakes';
     const badge=m.isMix?'<span class="mode-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Основной режим</span>':'';
     let classes='mode-btn';
     if(isActive) classes+=' active';
     if(isMixPrimary) classes+=' mix-primary';
+    if(isSecondary) classes+=' mode-btn-secondary';
     const countText = m.id === 'mix' 
       ? m.count + ' случайных вопросов'
       : m.count + ' вопрос' + (m.count === 1 ? '' : 'ов');
