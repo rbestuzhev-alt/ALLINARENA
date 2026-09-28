@@ -157,6 +157,68 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
   display:grid; gap:4px; place-items:center; font-family:inherit; font-size:11px; cursor:pointer; transition:.2s}
 .nav-btn svg{width:20px; height:20px}
 .nav-btn.active{background:linear-gradient(135deg,var(--pink),var(--pink2)); color:#fff; font-weight:800}
+
+/* Карты - анимации */
+.card-scene{position:relative; width:100%; min-height:200px; perspective:1000px; margin:20px 0}
+.card{
+  position:absolute; width:80px; height:112px; 
+  transform-style:preserve-3d; transition:transform .4s ease-out, opacity .3s ease;
+  left:50%; top:50%; margin-left:-40px; margin-top:-56px;
+}
+.card-face{
+  position:absolute; width:100%; height:100%; 
+  backface-visibility:hidden; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+}
+.card-back{
+  background:linear-gradient(135deg,#f06595,#c2255c);
+  transform:rotateY(0deg);
+}
+.card-back::after{
+  content:'♠'; font-size:32px; color:#fff; opacity:.9;
+}
+.card-front{
+  background:#fff; transform:rotateY(180deg);
+  font-size:24px; font-weight:800;
+}
+.card.flipped{transform:rotateY(180deg)}
+.card.fly-in{animation:cardFlyIn .5s ease-out forwards}
+.card.fly-out{animation:cardFlyOut .3s ease-in forwards}
+
+@keyframes cardFlyIn{
+  0%{transform:translate(200px,-300px) rotate(45deg); opacity:0}
+  100%{transform:translate(0,0) rotate(0deg); opacity:1}
+}
+@keyframes cardFlyOut{
+  0%{transform:translate(0,0) rotate(0deg); opacity:1}
+  100%{transform:translate(-300px,0) rotate(-15deg); opacity:0}
+}
+
+/* Веер карт на экране результатов */
+.fan-container{position:relative; width:100%; height:140px; margin:20px 0; perspective:1000px}
+.fan-card{
+  position:absolute; width:60px; height:84px; left:50%; top:50%;
+  margin-left:-30px; margin-top:-42px;
+  transform-style:preserve-3d; opacity:0;
+  animation:fanReveal .4s ease-out forwards;
+}
+.fan-card .card-face{border-radius:8px; font-size:18px}
+.fan-card .card-back::after{font-size:24px}
+
+@keyframes fanReveal{
+  0%{opacity:0; transform:rotateY(180deg) scale(.8)}
+  100%{opacity:1; transform:rotateY(0deg) scale(1)}
+}
+
+/* Поддержка prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .card, .card.fly-in, .card.fly-out, .fan-card{
+    animation:none !important; transition:none !important;
+  }
+  .card.flipped{transform:rotateY(180deg)}
+  .fan-card{opacity:1}
+}
 </style>
 </head>
 <body>
@@ -212,6 +274,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
       <div class="label" style="text-align:left">Режим игры</div>
       <div id="modeList"></div>
       <div id="noMistakesMsg" class="no-mistakes-msg hidden">Ошибок нет — идеально!</div>
+      <div id="startCardScene" class="card-scene hidden"></div>
       <button class="btn-soft" style="margin-top:14px" onclick="startQuiz()">Начать</button>
     </div>
   </div>
@@ -233,6 +296,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
     <div class="big" id="dScore"></div>
     <h2 id="dRank"></h2>
     <p id="dMsg"></p>
+    <div id="fanContainer" class="fan-container"></div>
     <div id="mistakesResult" class="hidden"></div>
     <button class="btn" onclick="startQuiz()">Пройти ещё раз</button>
     <div style="height:10px"></div>
@@ -430,6 +494,103 @@ function slide(d){
   li=Math.min(SLIDES.length-1,Math.max(0,li+d));renderSlide();
 }
 
+// Анимации карт
+function animateStartCards(){
+  const scene=$('startCardScene');
+  if(!scene) return Promise.resolve();
+  scene.classList.remove('hidden');
+  scene.innerHTML='';
+  
+  const suits=['♠','♥'];
+  const colors=['#000','#e03131'];
+  
+  return new Promise(resolve=>{
+    suits.forEach((suit,i)=>{
+      const card=document.createElement('div');
+      card.className='card fly-in';
+      card.style.animationDelay=(i*120)+'ms';
+      card.innerHTML=`
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front" style="color:${colors[i]}">${suit}</div>
+      `;
+      scene.appendChild(card);
+      
+      // Переворот карты после прилёта
+      setTimeout(()=>{
+        card.classList.add('flipped');
+      }, 500 + i*120);
+    });
+    
+    // Завершение анимации через 700мс
+    setTimeout(()=>{
+      scene.classList.add('hidden');
+      resolve();
+    }, 700);
+  });
+}
+
+function animateQuestionTransition(direction='next'){
+  const card=$('qCard');
+  if(!card) return Promise.resolve();
+  
+  return new Promise(resolve=>{
+    // Улетающая карточка
+    const tilt=(Math.random()*4+2) * (direction==='next'?-1:1);
+    card.style.transition='transform .2s ease-in, opacity .2s ease-in';
+    card.style.transform=`translateX(-300px) rotate(${tilt}deg)`;
+    card.style.opacity='0';
+    
+    setTimeout(()=>{
+      // Сброс позиции
+      card.style.transition='none';
+      card.style.transform='translateX(300px) rotate(5deg)';
+      card.style.opacity='0';
+      
+      // Плавное появление
+      requestAnimationFrame(()=>{
+        card.style.transition='transform .25s ease-out, opacity .25s ease-out';
+        card.style.transform='translateX(0) rotate(0deg)';
+        card.style.opacity='1';
+        setTimeout(resolve, 250);
+      });
+    }, 200);
+  });
+}
+
+function animateFanCards(){
+  const container=$('fanContainer');
+  if(!container) return;
+  container.innerHTML='';
+  
+  const cards=[
+    {suit:'♠',color:'#000'},
+    {suit:'♥',color:'#e03131'},
+    {suit:'♦',color:'#e03131'},
+    {suit:'♣',color:'#000'},
+    {suit:'♠',color:'#000'}
+  ];
+  
+  const angles=[-20,-10,0,10,20];
+  
+  cards.forEach((card,i)=>{
+    const el=document.createElement('div');
+    el.className='fan-card';
+    el.style.animationDelay=(i*80)+'ms';
+    el.style.transform=`rotate(${angles[i]}deg) translateX(${(i-2)*15}px)`;
+    el.innerHTML=`
+      <div class="card-face card-back"></div>
+      <div class="card-face card-front" style="color:${card.color}">${card.suit}</div>
+    `;
+    container.appendChild(el);
+    
+    // Переворот после появления
+    setTimeout(()=>{
+      el.style.transition='transform .3s ease-out';
+      el.style.transform=`rotate(${angles[i]}deg) translateX(${(i-2)*15}px) rotateY(180deg)`;
+    }, 400 + i*80);
+  });
+}
+
 function startQuiz(){
   let pool;
   if(currentMode==='mix'){
@@ -449,7 +610,12 @@ function startQuiz(){
   quiz.items=pool.map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
   quiz.idx=0;quiz.score=0;quiz.answered=false;
   $('quizIntro').classList.add('hidden');$('quizDone').classList.add('hidden');$('quizPlay').classList.remove('hidden');
-  go('quiz');renderQ();
+  go('quiz');
+  
+  // Анимация стартовых карт
+  animateStartCards().then(()=>{
+    renderQ();
+  });
 }
 function renderQ(){
   const q=quiz.items[quiz.idx];quiz.answered=false;
@@ -479,7 +645,14 @@ function answer(btn,i){
 }
 function nextQ(){
   quiz.idx++;
-  if(quiz.idx>=quiz.items.length){finish();}else renderQ();
+  if(quiz.idx>=quiz.items.length){
+    finish();
+  }else{
+    // Анимация перехода между вопросами
+    animateQuestionTransition('next').then(()=>{
+      renderQ();
+    });
+  }
 }
 function finish(){
   $('quizPlay').classList.add('hidden');$('quizDone').classList.remove('hidden');
@@ -497,6 +670,10 @@ function finish(){
   const best=+localStorage.getItem(bestKey)||0;
   if(s>best){localStorage.setItem(bestKey,s);$('recBadge').classList.remove('hidden');}
   else $('recBadge').classList.add('hidden');
+  
+  // Анимация веера карт
+  animateFanCards();
+  
   if(pct>=70)confetti();
   if(currentMode==='mistakes'){
     const remaining=getMistakes().length;
