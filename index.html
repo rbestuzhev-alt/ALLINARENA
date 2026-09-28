@@ -248,6 +248,10 @@ body.scroll-locked{overflow:hidden}
     <p id="dMsg"></p>
     <div id="mistakesResult" class="hidden"></div>
     <button class="btn" onclick="startQuiz()">Пройти ещё раз</button>
+    <button id="mistakesBtn" class="mode-btn mode-btn-secondary hidden" onclick="startMistakesMode()">
+      <div class="mode-title">Работа над ошибками</div>
+      <div class="mode-count" id="mistakesBtnCount"></div>
+    </button>
     <div style="height:10px"></div>
     <button class="btn ghost" onclick="go('home')">На главную</button>
   </div>
@@ -681,8 +685,25 @@ function finish(){
     $('mistakesResult').classList.add('hidden');
   }
   buildModes();
+  
+  // Показываем/скрываем кнопку "Работа над ошибками" на экране результатов
+  const mistakes=getMistakes();
+  const mistakesBtn=$('mistakesBtn');
+  if(mistakes.length>0){
+    mistakesBtn.classList.remove('hidden');
+    $('mistakesBtnCount').textContent=mistakes.length+' вопрос'+(mistakes.length===1?'':'ов');
+  }else{
+    mistakesBtn.classList.add('hidden');
+  }
+  
   window.scrollTo(0,0);
 }
+
+function startMistakesMode(){
+  currentMode='mistakes';
+  startQuiz();
+}
+
 function confetti(){
   const box=document.createElement('div');box.className='confetti';document.body.appendChild(box);
   const sym=['♠','♥','♦','♣'],col=['#f06595','#c2255c','#ffffff','#ffa8c5'];
