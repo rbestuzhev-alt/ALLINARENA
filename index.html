@@ -155,7 +155,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
     <span class="chip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg></span>
     <span><span class="card-title">Основы холдема</span><div class="card-desc">Правила за 5 минут — просто и коротко</div></span>
   </button>
-  <button class="card-btn" onclick="startQuiz()">
+  <button class="card-btn" onclick="go('quiz')">
     <span class="chip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
     <span><span class="card-title">Викторина</span><div class="card-desc">10 случайных вопросов · проверь себя</div></span>
   </button>
@@ -365,11 +365,10 @@ function go(name){
     else $('bestBox').classList.add('hidden');
   }
   if(name==='quiz'){
-    // Всегда показываем интро-экран и перерисовываем список режимов
-    // если викторина не запущена и не завершена
-    if($('quizPlay').classList.contains('hidden') && $('quizDone').classList.contains('hidden')){
-      $('quizIntro').classList.remove('hidden');
-    }
+    // Всегда показываем экран выбора режимов при переходе на викторину
+    $('quizIntro').classList.remove('hidden');
+    $('quizPlay').classList.add('hidden');
+    $('quizDone').classList.add('hidden');
     buildModes();
   }
 }
