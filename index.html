@@ -309,11 +309,23 @@ function removeMistake(qText){
 
 function buildModes(){
   const mistakes=getMistakes();
+  const hasMistakes=mistakes.length>0;
+  
+  // Если выбран режим "mistakes", но ошибок нет — переключить на "mix"
+  if(currentMode==='mistakes' && !hasMistakes){
+    currentMode='mix';
+  }
+  
   const modes=[
     {id:'mix',title:'Микс',count:10,isMix:true},
-    {id:'marathon',title:'Марафон',count:BANK.length},
-    {id:'mistakes',title:'Работа над ошибками',count:mistakes.length,disabled:mistakes.length===0}
+    {id:'marathon',title:'Марафон',count:BANK.length}
   ];
+  
+  // Добавляем режим "Работа над ошибками" только если есть ошибки
+  if(hasMistakes){
+    modes.push({id:'mistakes',title:'Работа над ошибками',count:mistakes.length});
+  }
+  
   const list=$('modeList');
   list.innerHTML=modes.map(m=>{
     const isActive=m.id===currentMode;
@@ -322,13 +334,14 @@ function buildModes(){
     let classes='mode-btn';
     if(isActive) classes+=' active';
     if(isMixPrimary) classes+=' mix-primary';
-    return '<button class="'+classes+'" data-mode="'+m.id+'"'+(m.disabled?' disabled':'')+' onclick="selectMode(\''+m.id+'\')">'+
+    return '<button class="'+classes+'" data-mode="'+m.id+'" onclick="selectMode(\''+m.id+'\')">'+
       '<div class="mode-title">'+m.title+badge+'</div>'+
       '<div class="mode-count">'+m.count+' вопрос'+(m.count===1?'':'ов')+'</div>'+
     '</button>';
   }).join('');
-  if(mistakes.length===0){ $('noMistakesMsg').classList.remove('hidden'); }
-  else { $('noMistakesMsg').classList.add('hidden'); }
+  
+  // Надпись "Ошибок нет — идеально!" больше не показываем
+  $('noMistakesMsg').classList.add('hidden');
 }
 
 function selectMode(modeId){
@@ -351,8 +364,12 @@ function go(name){
     if(best!==null){$('bestBox').classList.remove('hidden');$('bestVal').textContent=best+' / 10';}
     else $('bestBox').classList.add('hidden');
   }
-  if(name==='quiz' && $('quizPlay').classList.contains('hidden') && $('quizDone').classList.contains('hidden')){
-    $('quizIntro').classList.remove('hidden');
+  if(name==='quiz'){
+    // Всегда показываем интро-экран и перерисовываем список режимов
+    // если викторина не запущена и не завершена
+    if($('quizPlay').classList.contains('hidden') && $('quizDone').classList.contains('hidden')){
+      $('quizIntro').classList.remove('hidden');
+    }
     buildModes();
   }
 }
@@ -384,7 +401,13 @@ function startQuiz(){
     pool=shuffle([...BANK]);
   }else if(currentMode==='mistakes'){
     const mistakes=getMistakes();
-    pool=shuffle(BANK.filter(q=>mistakes.includes(q.q)));
+    // Защита: если ошибок нет, переключиться на "mix"
+    if(mistakes.length===0){
+      currentMode='mix';
+      pool=shuffle([...BANK]).slice(0,10);
+    }else{
+      pool=shuffle(BANK.filter(q=>mistakes.includes(q.q)));
+    }
   }
   quiz.items=pool.map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
   quiz.idx=0;quiz.score=0;quiz.answered=false;
