@@ -98,6 +98,12 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 .opt:disabled{cursor:default}
 .opt.correct{background:rgba(81,207,102,.14); border-color:var(--ok)}
 .opt.wrong{background:rgba(250,82,82,.12); border-color:var(--bad); animation:shake .4s}
+.mode-btn{display:block; width:100%; text-align:left; padding:14px 16px; border-radius:16px; font-family:inherit; font-size:15px;
+  background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--text); cursor:pointer; margin-bottom:10px; transition:.15s}
+.mode-btn:hover{border-color:rgba(230,73,128,.5); transform:translateY(-1px)}
+.mode-btn.active{background:rgba(230,73,128,.07); border-color:var(--pink)}
+.mode-btn .mode-title{font-weight:600}
+.mode-btn .mode-count{color:var(--mut); font-size:13px; margin-top:2px}
 .explain{margin-top:6px; padding:14px 16px; border-radius:16px; background:rgba(230,73,128,.08);
   border:1px solid rgba(230,73,128,.25); font-size:14px; line-height:1.55; color:#dcc9d3; animation:fadeUp .3s ease}
 .explain b{color:var(--pink)}
@@ -173,7 +179,9 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
     <div class="qcard" style="text-align:center">
       <div style="font-size:44px; margin-bottom:8px">♠</div>
       <h2 style="font-style:italic; text-transform:uppercase; margin:0 0 10px">Готовы к проверке?</h2>
-      <p class="mut" style="line-height:1.6">10 случайных вопросов: термины, комбинации, правила стола и математика рук. После каждого ответа — короткое пояснение, чтобы знание закреплялось.</p>
+      <p class="mut" style="line-height:1.6">Выберите режим викторины. После каждого ответа — короткое пояснение, чтобы знание закреплялось.</p>
+      <div class="label" style="text-align:left">Режим игры</div>
+      <div id="modeList"></div>
       <button class="btn" style="margin-top:14px" onclick="startQuiz()">Начать</button>
     </div>
   </div>
@@ -270,6 +278,33 @@ const SLIDES=[
 const $=id=>document.getElementById(id);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 let li=0, quiz={items:[],idx:0,score:0,answered:false};
+let currentMode='mix';
+
+function buildModes(){
+  const modes=[
+    {id:'mix',title:'Микс',count:10},
+    {id:'marathon',title:'Марафон',count:BANK.length}
+  ];
+  const cats=[...new Set(BANK.map(q=>q.c))];
+  cats.forEach(cat=>{
+    const count=BANK.filter(q=>q.c===cat).length;
+    modes.push({id:'cat_'+cat,title:'Категория: '+cat,count});
+  });
+  const list=$('modeList');
+  list.innerHTML=modes.map(m=>
+    '<button class="mode-btn'+(m.id===currentMode?' active':'')+'" data-mode="'+m.id+'" onclick="selectMode(\''+m.id+'\')">'+
+      '<div class="mode-title">'+m.title+'</div>'+
+      '<div class="mode-count">'+m.count+' вопрос'+(m.count===1?'':'ов')+'</div>'+
+    '</button>'
+  ).join('');
+}
+
+function selectMode(modeId){
+  currentMode=modeId;
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.mode===modeId);
+  });
+}
 
 function go(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -278,8 +313,9 @@ function go(name){
   $('nav-'+name).classList.add('active');
   window.scrollTo(0,0);
   if(name==='home'){
-    const best=localStorage.getItem('allin_best');
+    const best=localStorage.getItem('allin_best_mix');
     if(best!==null){$('bestBox').classList.remove('hidden');$('bestVal').textContent=best+' / 10';}
+    else $('bestBox').classList.add('hidden');
   }
   if(name==='quiz' && $('quizPlay').classList.contains('hidden') && $('quizDone').classList.contains('hidden')){
     $('quizIntro').classList.remove('hidden');
@@ -306,7 +342,16 @@ function slide(d){
 }
 
 function startQuiz(){
-  quiz.items=shuffle([...BANK]).slice(0,10).map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
+  let pool;
+  if(currentMode==='mix'){
+    pool=shuffle([...BANK]).slice(0,10);
+  }else if(currentMode==='marathon'){
+    pool=shuffle([...BANK]);
+  }else{
+    const cat=currentMode.replace('cat_','');
+    pool=shuffle(BANK.filter(q=>q.c===cat));
+  }
+  quiz.items=pool.map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
   quiz.idx=0;quiz.score=0;quiz.answered=false;
   $('quizIntro').classList.add('hidden');$('quizDone').classList.add('hidden');$('quizPlay').classList.remove('hidden');
   go('quiz');renderQ();
@@ -339,17 +384,20 @@ function nextQ(){
 function finish(){
   $('quizPlay').classList.add('hidden');$('quizDone').classList.remove('hidden');
   const s=quiz.score;
-  $('dScore').textContent=s+' / 10';
-  const ranks=[[10,'Мастер стола','Идеальный результат! Вы знаете холдем лучше большинства за этим столом.'],
-    [7,'Регуляр арены','Отличный результат — клуб может вами гордиться.'],
-    [4,'Уверенный любитель','Хорошая база! Ещё пара вечеров практики — и вы регуляр.'],
+  const total=quiz.items.length;
+  const pct=Math.round(s/total*100);
+  $('dScore').textContent=s+' / '+total;
+  const ranks=[[100,'Мастер стола','Идеальный результат! Вы знаете холдем лучше большинства за этим столом.'],
+    [70,'Регуляр арены','Отличный результат — клуб может вами гордиться.'],
+    [40,'Уверенный любитель','Хорошая база! Ещё пара вечеров практики — и вы регуляр.'],
     [0,'Начинающий игрок','Отличное начало! Перечитайте основы и возвращайтесь за реваншем.']];
-  const r=ranks.find(x=>s>=x[0]);
+  const r=ranks.find(x=>pct>=x[0]);
   $('dRank').textContent=r[1];$('dMsg').textContent=r[2];
-  const best=+localStorage.getItem('allin_best')||0;
-  if(s>best){localStorage.setItem('allin_best',s);$('recBadge').classList.remove('hidden');}
+  const bestKey='allin_best_'+currentMode;
+  const best=+localStorage.getItem(bestKey)||0;
+  if(s>best){localStorage.setItem(bestKey,s);$('recBadge').classList.remove('hidden');}
   else $('recBadge').classList.add('hidden');
-  if(s>=7)confetti();
+  if(pct>=70)confetti();
   window.scrollTo(0,0);
 }
 function confetti(){
@@ -367,6 +415,7 @@ function confetti(){
   }
   setTimeout(()=>box.remove(),5200);
 }
+buildModes();
 go('home');
 </script>
 <script type="module" src="/src/main.tsx"></script>
