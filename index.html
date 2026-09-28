@@ -102,9 +102,13 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
   background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--text); cursor:pointer; margin-bottom:10px; transition:.15s}
 .mode-btn:hover:not(:disabled){border-color:rgba(230,73,128,.5); transform:translateY(-1px)}
 .mode-btn.active{background:rgba(230,73,128,.07); border-color:var(--pink)}
+.mode-btn.active.mix-primary{background:linear-gradient(135deg,#f06595,#c2255c); border-color:transparent; color:#fff; box-shadow:0 8px 24px rgba(198,37,92,.35); padding:18px 20px}
+.mode-btn.active.mix-primary .mode-count{color:rgba(255,255,255,.85)}
 .mode-btn:disabled{opacity:.5; cursor:not-allowed}
-.mode-btn .mode-title{font-weight:600}
+.mode-btn .mode-title{font-weight:600; display:flex; align-items:center; gap:6px}
 .mode-btn .mode-count{color:var(--mut); font-size:13px; margin-top:2px}
+.mode-badge{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; padding:3px 8px; border-radius:99px; background:rgba(230,73,128,.15); color:#f06595}
+.mode-btn.active.mix-primary .mode-badge{background:rgba(255,255,255,.2); color:#fff}
 .no-mistakes-msg{text-align:center; color:var(--mut); font-size:13px; margin-top:10px; font-style:italic}
 .mistakes-result{margin-top:12px; padding:14px 16px; border-radius:16px; background:rgba(230,73,128,.08); border:1px solid rgba(230,73,128,.25); font-size:14px; line-height:1.55; color:#dcc9d3; animation:fadeUp .3s ease}
 .mistakes-result b{color:var(--pink)}
@@ -306,17 +310,23 @@ function removeMistake(qText){
 function buildModes(){
   const mistakes=getMistakes();
   const modes=[
-    {id:'mix',title:'Микс',count:10},
+    {id:'mix',title:'Микс',count:10,isMix:true},
     {id:'marathon',title:'Марафон',count:BANK.length},
     {id:'mistakes',title:'Работа над ошибками',count:mistakes.length,disabled:mistakes.length===0}
   ];
   const list=$('modeList');
-  list.innerHTML=modes.map(m=>
-    '<button class="mode-btn'+(m.id===currentMode?' active':'')+'" data-mode="'+m.id+'"'+(m.disabled?' disabled':'')+' onclick="selectMode(\''+m.id+'\')">'+
-      '<div class="mode-title">'+m.title+'</div>'+
+  list.innerHTML=modes.map(m=>{
+    const isActive=m.id===currentMode;
+    const isMixPrimary=m.isMix && isActive;
+    const badge=m.isMix?'<span class="mode-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Основной режим</span>':'';
+    let classes='mode-btn';
+    if(isActive) classes+=' active';
+    if(isMixPrimary) classes+=' mix-primary';
+    return '<button class="'+classes+'" data-mode="'+m.id+'"'+(m.disabled?' disabled':'')+' onclick="selectMode(\''+m.id+'\')">'+
+      '<div class="mode-title">'+m.title+badge+'</div>'+
       '<div class="mode-count">'+m.count+' вопрос'+(m.count===1?'':'ов')+'</div>'+
-    '</button>'
-  ).join('');
+    '</button>';
+  }).join('');
   if(mistakes.length===0){ $('noMistakesMsg').classList.remove('hidden'); }
   else { $('noMistakesMsg').classList.add('hidden'); }
 }
@@ -324,7 +334,9 @@ function buildModes(){
 function selectMode(modeId){
   currentMode=modeId;
   document.querySelectorAll('.mode-btn').forEach(btn=>{
-    btn.classList.toggle('active',btn.dataset.mode===modeId);
+    const isActive=btn.dataset.mode===modeId;
+    btn.classList.toggle('active',isActive);
+    btn.classList.toggle('mix-primary',isActive && btn.dataset.mode==='mix');
   });
 }
 
