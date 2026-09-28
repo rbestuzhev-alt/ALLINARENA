@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALL-IN ARENA · Тренажёр холдема</title>
+<meta name="description" content="Тренажёр клуба спортивного покера ALL-IN ARENA: правила техасского холдема, викторина по режимам и категориям, работа над ошибками.">
+<meta property="og:title" content="ALL-IN ARENA — тренажёр холдема">
+<meta property="og:description" content="Тренажёр клуба спортивного покера ALL-IN ARENA: правила техасского холдема, викторина по режимам и категориям, работа над ошибками.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90' fill='%23f06595'>♠</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,600;0,800;1,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#171014; --card:rgba(255,255,255,.04); --line:rgba(255,255,255,.08);
+  --pink:#f06595; --pink2:#c2255c; --text:#f3ecf0; --mut:#9b8b93;
+  --ok:#51cf66; --bad:#fa5252;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+body{margin:0; font-family:'Manrope',sans-serif; background:var(--bg); color:var(--text);
+  min-height:100dvh; padding-bottom:96px; overflow-x:hidden}
+body::before{content:''; position:fixed; inset:0; pointer-events:none;
+  background:radial-gradient(600px 300px at 50% -50px, rgba(230,73,128,.14), transparent 70%)}
+.screen{max-width:520px; margin:0 auto; padding:28px 20px 12px; display:none}
+.screen.active{display:block; animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0; transform:translateY(14px)}to{opacity:1; transform:none}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pop{from{transform:scale(.85); opacity:0}to{transform:scale(1); opacity:1}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+/* Шапка */
+.head{text-align:center; margin-bottom:26px}
+.logo{width:74px; color:var(--text); filter:drop-shadow(0 6px 18px rgba(230,73,128,.35)); animation:float 3.5s ease-in-out infinite}
+h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:uppercase; letter-spacing:.05em; font-size:26px}
+.sub{color:var(--mut); font-size:14px}
+.label{color:var(--mut); font-size:11px; text-transform:uppercase; letter-spacing:.2em; margin:22px 4px 10px}
+
+/* Карточки-кнопки меню */
+.card-btn{display:flex; gap:14px; align-items:center; width:100%; text-align:left; cursor:pointer;
+  background:var(--card); border:1px solid var(--line); border-radius:22px; padding:18px; color:var(--text);
+  font-family:inherit; margin-bottom:12px; transition:transform .15s, border-color .2s, background .2s}
+.card-btn:hover{transform:translateY(-2px); border-color:rgba(230,73,128,.5); background:rgba(230,73,128,.07)}
+.card-btn:active{transform:scale(.98)}
+.chip{width:46px; height:46px; border-radius:14px; background:rgba(230,73,128,.14); color:var(--pink);
+  display:grid; place-items:center; flex:none}
+.card-title{font-style:italic; font-weight:800; text-transform:uppercase; letter-spacing:.03em; font-size:16px}
+.card-desc{color:var(--mut); font-size:13px; margin-top:3px}
+.foot-note{text-align:center; color:var(--mut); font-size:12px; margin-top:26px}
+.best{margin-top:4px; background:var(--card); border:1px solid var(--line); border-radius:16px;
+  padding:12px 16px; display:flex; justify-content:space-between; font-size:14px; color:var(--mut)}
+.best b{color:var(--pink)}
+
+/* Кнопки */
+.btn{width:100%; border:none; border-radius:18px; padding:16px; cursor:pointer; font-family:inherit;
+  font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:.07em; font-size:14px;
+  background:linear-gradient(135deg,var(--pink),var(--pink2)); color:#fff;
+  box-shadow:0 8px 24px rgba(198,37,92,.35); transition:transform .15s, filter .2s}
+.btn:hover{filter:brightness(1.08); transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent; border:1px solid var(--line); color:var(--mut); box-shadow:none}
+.topbar{display:flex; align-items:center; gap:12px; margin-bottom:18px}
+.back{width:40px; height:40px; border-radius:14px; background:var(--card); border:1px solid var(--line);
+  color:var(--mut); cursor:pointer; display:grid; place-items:center; flex:none}
+.topbar .label{margin:0}
+.dots{margin-left:auto; display:flex; gap:5px}
+.dot{width:6px; height:6px; border-radius:99px; background:rgba(255,255,255,.18); transition:.3s}
+.dot.on{width:18px; background:var(--pink)}
+
+/* Урок */
+.slide{background:var(--card); border:1px solid var(--line); border-radius:24px; padding:24px; min-height:340px; animation:fadeUp .35s ease}
+.slide h2{font-style:italic; font-weight:800; text-transform:uppercase; font-size:20px; margin:0 0 14px}
+.slide p{line-height:1.6; font-size:15px; margin:0 0 10px}
+.slide b{color:var(--pink)}
+.mut{color:var(--mut); font-size:13px}
+.timeline{list-style:none; margin:0; padding:0}
+.timeline li{position:relative; padding:0 0 16px 22px; line-height:1.45; font-size:15px}
+.timeline li::before{content:''; position:absolute; left:2px; top:6px; width:8px; height:8px; border-radius:50%;
+  background:var(--pink); box-shadow:0 0 0 4px rgba(230,73,128,.15)}
+.timeline li::after{content:''; position:absolute; left:5.5px; top:18px; bottom:2px; width:1px; background:var(--line)}
+.timeline li:last-child::after{display:none}
+.deflist{list-style:none; margin:0; padding:0}
+.deflist li{margin-bottom:12px; line-height:1.5; font-size:15px}
+.deflist b{display:inline-block; margin-right:6px}
+.ranks{margin:0; padding-left:22px}
+.ranks li{margin-bottom:9px; font-size:15px}
+.ranks li::marker{color:var(--pink); font-weight:800}
+.slide-nav{display:flex; gap:10px; margin-top:16px}
+.slide-nav .btn{padding:14px}
+
+/* Викторина */
+.qcard{background:var(--card); border:1px solid var(--line); border-radius:24px; padding:22px; animation:fadeUp .35s ease}
+.qmeta{display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--mut); margin-bottom:10px}
+.score-pill{background:rgba(230,73,128,.14); color:var(--pink); border-radius:99px; padding:4px 12px; font-weight:800}
+.progress{height:6px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; margin-bottom:18px}
+.progress i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--pink),var(--pink2)); border-radius:inherit; transition:width .4s ease}
+.tag{display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--pink);
+  border:1px solid rgba(230,73,128,.35); border-radius:99px; padding:3px 10px; margin-bottom:12px}
+.qtext{font-size:17px; font-weight:600; line-height:1.5; margin:0 0 16px}
+.opt{display:block; width:100%; text-align:left; padding:14px 16px; border-radius:16px; font-family:inherit; font-size:15px;
+  background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--text); cursor:pointer; margin-bottom:10px; transition:.15s}
+.opt:hover:not(:disabled){border-color:rgba(230,73,128,.5); transform:translateY(-1px)}
+.opt:disabled{cursor:default}
+.opt.correct{background:rgba(81,207,102,.14); border-color:var(--ok)}
+.opt.wrong{background:rgba(250,82,82,.12); border-color:var(--bad); animation:shake .4s}
+.mode-btn{display:block; width:100%; text-align:left; padding:14px 16px; border-radius:16px; font-family:inherit; font-size:15px;
+  background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--text); cursor:pointer; margin-bottom:10px; transition:.15s}
+.mode-btn:hover:not(:disabled):not(.mix-primary){border-color:rgba(230,73,128,.5); transform:translateY(-1px); background:rgba(230,73,128,.07)}
+.mode-btn.active{background:rgba(230,73,128,.07); border-color:rgba(230,73,128,.5)}
+.mode-btn-secondary{margin-top:24px; padding:12px 16px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06)}
+.mode-btn-secondary .mode-title{color:#9b8b93; font-size:14px}
+.mode-btn-secondary .mode-count{color:#9b8b93; font-size:12px}
+.mode-btn-secondary:hover:not(:disabled){border-color:rgba(230,73,128,.35); transform:none; background:rgba(255,255,255,.02)}
+.mode-btn-secondary.active{background:rgba(230,73,128,.07); border-color:rgba(230,73,128,.5)}
+.mode-btn-secondary.active .mode-title{color:var(--text)}
+.mode-btn-secondary.active .mode-count{color:#9b8b93}
+.btn-soft{width:100%; border:1px solid var(--line); border-radius:18px; padding:16px; cursor:pointer; font-family:inherit;
+  font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:.07em; font-size:14px;
+  background:var(--card); color:var(--pink); transition:transform .15s, border-color .2s, background .2s}
+.btn-soft:hover{filter:brightness(1.08); transform:translateY(-1px); border-color:rgba(230,73,128,.5); background:rgba(230,73,128,.07)}
+.btn-soft:active{transform:scale(.97)}
+.mode-btn.active.mix-primary{
+  background:linear-gradient(135deg,#f06595,#c2255c,#f06595);
+  background-size:200% 200%;
+  border-color:transparent; color:#fff; 
+  box-shadow:0 8px 24px rgba(198,37,92,.35); 
+  padding:18px 20px;
+  animation:mixFloat 3.5s ease-in-out infinite, mixGradient 4s ease-in-out infinite;
+}
+@keyframes mixFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-1.5px)}
+}
+@keyframes mixGradient{
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+.mode-btn.active.mix-primary .mode-count{color:rgba(255,255,255,.85)}
+.mode-btn:disabled{opacity:.5; cursor:not-allowed}
+.mode-btn .mode-title{font-weight:600; display:flex; align-items:center; gap:6px}
+.mode-btn .mode-count{color:var(--mut); font-size:13px; margin-top:2px}
+.mode-badge{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; padding:3px 8px; border-radius:99px; background:rgba(230,73,128,.15); color:#f06595}
+.mode-btn.active.mix-primary .mode-badge{background:rgba(255,255,255,.2); color:#fff}
+.no-mistakes-msg{text-align:center; color:var(--mut); font-size:13px; margin-top:10px; font-style:italic}
+.mistakes-result{margin-top:12px; padding:14px 16px; border-radius:16px; background:rgba(230,73,128,.08); border:1px solid rgba(230,73,128,.25); font-size:14px; line-height:1.55; color:#dcc9d3; animation:fadeUp .3s ease}
+.mistakes-result b{color:var(--pink)}
+.mistakes-result.all-clear{color:var(--pink); font-weight:600; background:none; border:none; padding:0; margin-bottom:54px}
+.explain{margin-top:6px; padding:14px 16px; border-radius:16px; background:rgba(230,73,128,.08);
+  border:1px solid rgba(230,73,128,.25); font-size:14px; line-height:1.55; color:#dcc9d3; animation:fadeUp .3s ease}
+.explain b{color:var(--pink)}
+#nextBtn{margin-top:14px}
+
+/* Результат */
+.done{text-align:center; padding-top:20px}
+.done .big{font-size:64px; font-weight:800; font-style:italic; animation:pop .45s ease;
+  background:linear-gradient(135deg,var(--pink),#fff); -webkit-background-clip:text; background-clip:text; color:transparent}
+.done h2{font-style:italic; text-transform:uppercase; letter-spacing:.04em; margin:6px 0 8px}
+.done p{color:var(--mut); line-height:1.6; max-width:320px; margin:0 auto 22px}
+.record{display:inline-block; margin-bottom:10px; font-size:12px; text-transform:uppercase; letter-spacing:.15em;
+  color:#ffd43b; animation:pop .5s ease}
+.confetti{position:fixed; inset:0; z-index:60; pointer-events:none; overflow:hidden}
+.confetti span{position:fixed; top:-24px; z-index:60; pointer-events:none; animation:fall linear forwards}
+.hidden{display:none!important}
+
+/* Нижняя навигация */
+.bottom{position:fixed; bottom:12px; left:50%; transform:translateX(-50%);
+  width:min(520px, calc(100% - 24px)); display:flex; padding:6px; gap:4px;
+  background:rgba(26,17,21,.92); backdrop-filter:blur(12px); border:1px solid var(--line); border-radius:22px; z-index:40}
+.nav-btn{flex:1; border:none; background:transparent; color:#8d7f88; padding:10px 4px 8px; border-radius:16px;
+  display:grid; gap:4px; place-items:center; font-family:inherit; font-size:11px; cursor:pointer; transition:.2s}
+.nav-btn svg{width:20px; height:20px}
+.nav-btn.active{background:linear-gradient(135deg,var(--pink),var(--pink2)); color:#fff; font-weight:800}
+
+/* Блокировка скролла во время анимации */
+body.scroll-locked{overflow:hidden}
+
+/* Веер карт - все стили задаются инлайн через Web Animations API */
+</style>
+</head>
+<body>
+
+<!-- ГЛАВНАЯ -->
+<section class="screen active" id="s-home">
+  <div class="head">
+    <!-- Чтобы использовать оригинальный логотип: сохраните его как logo.png рядом с index.html
+         и замените весь <svg> на <img src="logo.png" class="logo" alt="ALL-IN ARENA"> -->
+    <img src="https://i.postimg.cc/MG5MvMSZ/logowhite.png" class="logo" alt="ALL-IN ARENA">
+    <h1>All-in Arena</h1>
+    <div class="sub">Клуб спортивного покера</div>
+  </div>
+  <div class="label">Обучение</div>
+  <button class="card-btn" onclick="openLearn()">
+    <span class="chip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg></span>
+    <span><span class="card-title">Основы холдема</span><div class="card-desc">Правила за 5 минут — просто и коротко</div></span>
+  </button>
+  <button class="card-btn" onclick="go('quiz')">
+    <span class="chip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+    <span><span class="card-title">Викторина</span><div class="card-desc">10 случайных вопросов · проверь себя</div></span>
+  </button>
+  <div class="best hidden" id="bestBox"><span>Лучший результат</span><b id="bestVal"></b></div>
+  <div class="foot-note">Учебный модуль клуба</div>
+</section>
+
+<!-- ОСНОВЫ -->
+<section class="screen" id="s-learn">
+  <div class="topbar">
+    <button class="back" onclick="go('home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="label">Основы холдема</div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="slide" id="slideBox"></div>
+  <div class="slide-nav">
+    <button class="btn ghost" id="prevBtn" onclick="slide(-1)">Назад</button>
+    <button class="btn" id="fwdBtn" onclick="slide(1)">Дальше</button>
+  </div>
+</section>
+
+<!-- ВИКТОРИНА -->
+<section class="screen" id="s-quiz">
+  <div class="topbar">
+    <button class="back" onclick="quizBack()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="label">Викторина</div>
+  </div>
+
+  <div id="quizIntro">
+    <div class="qcard" style="text-align:center">
+      <div style="font-size:44px; margin-bottom:8px">♠</div>
+      <h2 style="font-style:italic; text-transform:uppercase; margin:0 0 10px">Готовы к проверке?</h2>
+      <p class="mut" style="line-height:1.6">Выберите режим викторины. После каждого ответа — короткое пояснение, чтобы знание закреплялось.</p>
+      <div class="label" style="text-align:left">Режим игры</div>
+      <div id="modeList"></div>
+      <div id="noMistakesMsg" class="no-mistakes-msg hidden">Ошибок нет — идеально!</div>
+      <button class="btn-soft" style="margin-top:14px" onclick="startQuiz()">Начать</button>
+    </div>
+  </div>
+
+  <div id="quizPlay" class="hidden">
+    <div class="qmeta"><span id="qNum"></span><span class="score-pill" id="qScore"></span></div>
+    <div class="progress"><i id="qBar"></i></div>
+    <div class="qcard" id="qCard">
+      <span class="tag" id="qTag"></span>
+      <p class="qtext" id="qText"></p>
+      <div id="qOpts"></div>
+      <div class="explain hidden" id="qExplain"></div>
+      <button class="btn hidden" id="nextBtn" onclick="nextQ()"></button>
+    </div>
+  </div>
+
+  <div id="quizDone" class="hidden done">
+    <div id="recBadge" class="record hidden">★ Новый рекорд клуба</div>
+    <div class="big" id="dScore"></div>
+    <h2 id="dRank"></h2>
+    <p id="dMsg"></p>
+    <div id="mistakesResult" class="hidden"></div>
+    <button class="btn" onclick="startQuiz()">Пройти ещё раз</button>
+    <button id="mistakesBtn" class="mode-btn mode-btn-secondary hidden" onclick="startMistakesMode()">
+      <div class="mode-title">Работа над ошибками</div>
+      <div class="mode-count" id="mistakesBtnCount"></div>
+    </button>
+    <div style="height:10px"></div>
+    <button class="btn ghost" onclick="go('home')">На главную</button>
+  </div>
+</section>
+
+<nav class="bottom">
+  <button class="nav-btn active" id="nav-home" onclick="go('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Главная</button>
+  <button class="nav-btn" id="nav-learn" onclick="openLearn()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg>Основы</button>
+  <button class="nav-btn" id="nav-quiz" onclick="go('quiz')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>Викторина</button>
+</nav>
+
+<script>
+/* ---------- БАНК ВОПРОСОВ (добавляйте свои по образцу) ---------- */
+const BANK=[
+{c:'Математика',q:'Что такое «equity» (доля в банке)?',o:['Количество фишек в стеке','Процент выигрыша за сессию','Ваша вероятность выиграть банк в данный момент раздачи','Размер банка на столе'],a:2,e:'Equity показывает, какая часть банка математически «принадлежит» вам прямо сейчас.'},
+{c:'Математика',q:'Что такое «fold equity» (фолд-эквити)?',o:['Вероятность собрать флеш','Вероятность проиграть раздачу','Вероятность ошибки дилера','Вероятность, что соперник сбросит на вашу ставку'],a:3,e:'Чем выше фолд-эквити, тем выгоднее блеф: даже со слабой рукой можно забрать банк.'},
+{c:'Ситуации',q:'У вас 6♠ 9♠, на флопе 7♣ 8♦ K♥. Как называется ваше дро?',o:['Оверкарты','Флеш-дро','Гатшот (дырявый стрит)','Открытый стрит-дро'],a:2,e:'Гатшот — стрит-дро, которому не хватает одной карты в середине. У него всего 4 аута против 8 у открытого стрита.'},
+{c:'Психология',q:'Что такое «тильт»?',o:['Обязательная ставка','Эмоциональное состояние после проигрыша с плохими решениями','Техника блефа','Тип покерной комбинации'],a:1,e:'Тильт — главный враг банкролла. Умение распознать его и остановиться — навык профессионала.'},
+{c:'Психология',q:'Игрок, который играет очень мало рук и только сильные, называется…',o:['Лузовый','Агрессивный','Тайтовый','Пассивный'],a:2,e:'Против тайтовых игроков выгоднее блефовать, а с их рейзами — проявлять осторожность.'},
+{c:'Психология',q:'Игрок, который часто коллирует, но редко рейзит, называется…',o:['Пассивный (коллинг-стейшн)','Тайтовый','Агрессивный','Лузовый'],a:0,e:'Против пассивных игроков блеф почти не работает — их нужно переигрывать сильными руками.'},
+{c:'Тактика',q:'Что такое «3-bet»?',o:['Три последовательных колла','Третья карта на флопе','Рейз в ответ на рейз','Ставка в три блайнда'],a:2,e:'3-bet на префлопе — признак сильной руки или агрессивного розыгрыша премиум-диапазона.'},
+{c:'Термины',q:'Что такое «дро»?',o:['Ставка в банк','Сброс карт','Пара одной масти','Незаконченная комбинация, которой не хватает карт'],a:3,e:'Флеш-дро — 4 карты одной масти (нужна пятая), стрит-дро — 4 карты подряд. Ценность дро в его аутах.'},
+{c:'Термины',q:'Сколько личных карт получает каждый игрок в техасском холдеме?',o:['Две','Три','Четыре','Пять'],a:0,e:'В холдеме у вас 2 личные карты плюс 5 общих на столе.'},
+{c:'Термины',q:'Что такое «префлоп»?',o:['Торги до появления общих карт','Первая общая карта','Момент вскрытия рук','Ставка вслепую'],a:0,e:'Префлоп — первая улица торгов: общие карты ещё не открыты.'},
+{c:'Термины',q:'«Флоп» — это…',o:['Три первые общие карты','Четвёртая общая карта','Последняя общая карта','Отказ от борьбы за банк'],a:0,e:'На флопе дилер открывает сразу три общие карты.'},
+{c:'Термины',q:'«Тёрн» — это…',o:['Четвёртая общая карта','Третья общая карта','Пятая общая карта','Двойная ставка'],a:0,e:'Тёрн — четвёртая общая карта, следующая за флопом.'},
+{c:'Термины',q:'«Ривер» — это…',o:['Пятая, последняя общая карта','Первая ставка в раздаче','Вскрытие карт','Крупная фишка в банке'],a:0,e:'Ривер закрывает борд: после него торгов больше нет.'},
+{c:'Термины',q:'Что означает действие «бет»?',o:['Первая ставка в текущем круге торгов','Уравнивание чужой ставки','Увеличение чужой ставки','Пропуск хода'],a:0,e:'Бет — открытие торгов ставкой, когда до вас никто не ставил.'},
+{c:'Термины',q:'«Рейз» — это…',o:['Увеличение ставки соперника','Уравнивание ставки','Сброс карт','Обязательная ставка вслепую'],a:0,e:'Рейз повышает цену продолжения: соперникам придётся платить больше.'},
+{c:'Термины',q:'«Колл» — это…',o:['Уравнивание текущей ставки','Увеличение ставки','Пропуск хода без ставки','Вскрытие карт'],a:0,e:'Колл — внести ровно столько, сколько поставил соперник.'},
+{c:'Термины',q:'«Чек» — это…',o:['Пропуск хода, если ставок ещё не было','Уравнивание олл-ина','Сброс карт','Минимальная ставка'],a:0,e:'Чек доступен только тогда, когда в этом круге никто не ставил.'},
+{c:'Термины',q:'«Фолд» — это…',o:['Сброс карт и выход из раздачи','Ответ на ставку','Ставка всех фишек','Показ карт дилеру'],a:0,e:'После фолда вы не претендуете на банк в этой раздаче.'},
+{c:'Блайнды',q:'Кто постит большой блайнд?',o:['Второй игрок слева от дилера','Первый игрок слева от дилера','Сам дилер','Первый, кто сделал ставку'],a:0,e:'Малый блайнд — первый слева от баттона, большой — второй.'},
+{c:'Блайнды',q:'Зачем нужны блайнды?',o:['Создают стартовый банк и задают цену игры','Штрафуют опоздавших игроков','Определяют дилера раздачи','Заменяют карты в колоде'],a:0,e:'Без блайндов банк пуст и бороться не за что. Они же задают уровень ставок.'},
+{c:'Блайнды',q:'Малый блайнд обычно равен…',o:['Половине большого блайнда','Большому блайнду','Двум большим блайндам','Четверти банка'],a:0,e:'Классика: SB = ½ BB, например 10/20 фишек.'},
+{c:'Комбинации',q:'Самая сильная комбинация в холдеме…',o:['Роял-флеш','Стрит-флеш','Каре','Фулл-хаус'],a:0,e:'Роял-флеш: 10-J-Q-K-A одной масти. Побить его нечем.'},
+{c:'Комбинации',q:'Что сильнее: флеш или фулл-хаус?',o:['Фулл-хаус','Флеш','Они равны по силе','Зависит от масти'],a:0,e:'Лестница силы: стрит < флеш < фулл-хаус < каре.'},
+{c:'Комбинации',q:'«Флеш» — это…',o:['Пять карт одной масти не по порядку','Пять карт подряд любой масти','Три карты одного достоинства','Тройка плюс пара'],a:0,e:'Во флеше решает масть, а не порядок номиналов.'},
+{c:'Комбинации',q:'«Стрит» — это…',o:['Пять карт подряд любой масти','Пять карт одной масти','Четыре одинаковые карты','Две пары'],a:0,e:'Например 5-6-7-8-9. Туз работает и в младшем стрите A-2-3-4-5.'},
+{c:'Комбинации',q:'Самая слабая «комбинация»…',o:['Старшая карта','Пара','Две пары','Тройка'],a:0,e:'Если ничего не собрано — играете на старшей карте.'},
+{c:'Комбинации',q:'Что такое «сет»?',o:['Тройка из карманной пары и одной общей карты','Любые три карты одной масти','Три карты подряд','Фулл-хаус без пары'],a:0,e:'Сет — замаскированная и очень сильная тройка.'},
+{c:'Комбинации',q:'Что старше фулл-хауса?',o:['Каре','Флеш','Стрит','Тройка'],a:0,e:'Порядок: флеш → фулл-хаус → каре → стрит-флеш → роял-флеш.'},
+{c:'Правила',q:'Когда возникает боковой банк?',o:['Когда игрок пошёл олл-ин с меньшим стеком','Когда все сделали чек','При каждом рейзе','Когда дилер открыл флоп'],a:0,e:'Олл-ин борется только за банк, в который успел внести фишки; излишек уходит в боковой.'},
+{c:'Правила',q:'Игрок молча бросил одну крупную фишку в ответ на бет. По правилам это…',o:['Колл','Рейз','Олл-ин','Новый бет'],a:0,e:'Правило крупной фишки: без слов это уравнивание. Хотите рейз — скажите до броска.'},
+{c:'Правила',q:'Что такое стринг-бет?',o:['Ставка в несколько приёмов без объявления суммы','Двойная ставка','Ставка мелкими фишками','Уравнивание вслепую'],a:0,e:'Действует только первая порция фишек. Объявляйте сумму голосом — и споров не будет.'},
+{c:'Правила',q:'У вас меньше фишек, чем ставка соперника. Что можно сделать?',o:['Пойти олл-ин на свой стек','Достать фишки вне стола','Забрать банк себе','Попросить фишки у соперника'],a:0,e:'Ваш олл-ин не выбьет соперников: излишек их ставок уйдёт в боковой банк.'},
+{c:'Математика',q:'«Ауты» — это…',o:['Карты, которые улучшат вашу руку до выигрышной','Фишки соперника','Карты в сбросе','Штрафные очки'],a:0,e:'Считайте ауты — и поймёте, стоит ли продолжать раздачу.'},
+{c:'Математика',q:'«Натс» — это…',o:['Рука, которую сейчас невозможно побить','Любая пара тузов','Лучшая рука за весь вечер','Комбинация с кикером'],a:0,e:'С натсом можно ставить всё: сильнее уже ничего не соберётся.'},
+{c:'Математика',q:'У вас флеш-дро на флопе (9 аутов). Примерный шанс собрать флеш к риверу?',o:['Около 36%','Около 9%','Около 70%','Около 18%'],a:0,e:'Правило четырёх: на флопе ауты × 4, на тёрне × 2. Получаем 9 × 4 = 36%.'},
+{c:'Математика',q:'Что такое «кикер»?',o:['Боковая карта, решающая спор при равных комбинациях','Первая ставка раздачи','Шестая общая карта','Жетон дилера'],a:0,e:'Пара тузов с кикером-двойкой слабее пары тузов с кикером-королём.'},
+{c:'Математика',q:'Почему позиция за столом так важна?',o:['Игроки поздних позиций видят действия соперников до своего хода','Ближе к дилеру удобнее брать карты','Позиция добавляет ауты','Ранняя позиция видит больше общих карт'],a:0,e:'Чем позже вы действуете, тем больше информации — тем меньше ошибок.'},
+{c:'Термины',q:'«Шоудаун» — это…',o:['Вскрытие и сравнение рук после последних торгов','Первая ставка раздачи','Обмен картами с дилером','Перерыв между играми'],a:0,e:'На шоудауне побеждает сильнейшая комбинация или последний игрок с картами.'}
+];
+
+/* ---------- УРОК: СЛАЙДЫ ---------- */
+const SLIDES=[
+{t:'Цель игры',h:'Собрать комбинацию сильнее, чем у соперников.<br><br>У вас <b>2 личные карты</b> и <b>5 общих</b> на столе. Комбинация — любые 5 карт из этих семи.<br><span class="mut">Играем без денег: фишки — это очки и спортивный интерес.</span>'},
+{t:'Блайнды',h:'До раздачи карт два игрока ставят обязательные ставки: <b>малый блайнд (SB)</b> и <b>большой блайнд (BB)</b>.<br><br>Это стартовый банк — причина бороться за раздачу. Блайнды двигаются по кругу, чтобы все игроки были в равных условиях.'},
+{t:'Как идёт раздача',tl:['Префлоп — торги на личных картах','Флоп — открываются 3 общие карты','Тёрн — четвёртая общая карта','Ривер — пятая общая карта','Шоудаун — вскрытие и сравнение рук'],h:'На каждой улице можно ставить, уравнивать или сбросить карты.'},
+{t:'Действия игрока',dl:[['Чек','пропустить ход, если ставок не было'],['Бет','первая ставка в круге торгов'],['Колл','уравнять чужую ставку'],['Рейз','увеличить ставку соперника'],['Фолд','сбросить карты и выйти из раздачи']]},
+{t:'Комбинации: от сильной к слабой',rk:['Роял-флеш — 10 J Q K A одной масти','Стрит-флеш — пять подряд одной масти','Каре — четыре одинаковые карты','Фулл-хаус — тройка + пара','Флеш — пять карт одной масти','Стрит — пять карт подряд','Тройка — три одинаковые карты','Две пары','Пара','Старшая карта']},
+{t:'Боковой банк',h:'Игрок поставил всё (олл-ин), но его стек меньше ставок соперников?<br><br>Тогда излишек остальных игроков уходит в <b>боковой банк</b>. Олл-ин борется только за тот банк, в который успел внести фишки.'},
+{t:'Крупная фишка и стринг-бет',dl:[['Крупная фишка','молча бросили одну большую фишку в ответ на бет — это колл, а не рейз'],['Стринг-бет','фишки нельзя добавлять частями: действует только первая порция']],h:'Намерение объявляется словами до движения фишек — так стол остаётся честным.'},
+{t:'Ауты и натс',h:'<b>Ауты</b> — карты, которые улучшат вашу руку до выигрышной.<br>Подсказка: на флопе умножьте количество аутов на 4 — получите примерный шанс в процентах к риверу.<br><br><b>Натс</b> — рука, которую сейчас невозможно побить. С натсом можно ставить всё.'},
+{t:'Готовы к столу?',h:'Теперь вы знаете базу техасского холдема.<br><br>Проверьте себя: викторина задаст 10 случайных вопросов по терминам, комбинациям, правилам и математике рук.',cta:true}
+];
+
+/* ---------- ЛОГИКА ---------- */
+const $=id=>document.getElementById(id);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let li=0, quiz={items:[],idx:0,score:0,answered:false};
+let currentMode='mix';
+
+function getMistakes(){
+  try{ return JSON.parse(localStorage.getItem('allin_mistakes'))||[]; }
+  catch(e){ return []; }
+}
+function saveMistakes(arr){
+  localStorage.setItem('allin_mistakes',JSON.stringify(arr));
+}
+function addMistake(qText){
+  const arr=getMistakes();
+  if(!arr.includes(qText)){ arr.push(qText); saveMistakes(arr); }
+}
+function removeMistake(qText){
+  const arr=getMistakes().filter(x=>x!==qText);
+  saveMistakes(arr);
+}
+
+function buildModes(){
+  const mistakes=getMistakes();
+  const hasMistakes=mistakes.length>0;
+  
+  // Если выбран режим "mistakes", но ошибок нет — переключить на "mix"
+  if(currentMode==='mistakes' && !hasMistakes){
+    currentMode='mix';
+  }
+  
+  const modes=[
+    {id:'mix',title:'Микс',count:10,isMix:true},
+    {id:'marathon',title:'Марафон',count:BANK.length}
+  ];
+  
+  // Добавляем режим "Работа над ошибками" только если есть ошибки
+  if(hasMistakes){
+    modes.push({id:'mistakes',title:'Работа над ошибками',count:mistakes.length});
+  }
+  
+  const list=$('modeList');
+  list.innerHTML=modes.map(m=>{
+    const isActive=m.id===currentMode;
+    const isMixPrimary=m.isMix && isActive;
+    const isSecondary=m.id==='mistakes';
+    const badge=m.isMix?'<span class="mode-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Основной режим</span>':'';
+    let classes='mode-btn';
+    if(isActive) classes+=' active';
+    if(isMixPrimary) classes+=' mix-primary';
+    if(isSecondary) classes+=' mode-btn-secondary';
+    const countText = m.id === 'mix' 
+      ? m.count + ' случайных вопросов'
+      : m.count + ' вопрос' + (m.count === 1 ? '' : 'ов');
+    return '<button class="'+classes+'" data-mode="'+m.id+'" onclick="selectMode(\''+m.id+'\')">'+
+      '<div class="mode-title">'+m.title+badge+'</div>'+
+      '<div class="mode-count">'+countText+'</div>'+
+    '</button>';
+  }).join('');
+  
+  // Надпись "Ошибок нет — идеально!" больше не показываем
+  $('noMistakesMsg').classList.add('hidden');
+}
+
+function selectMode(modeId){
+  currentMode=modeId;
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    const isActive=btn.dataset.mode===modeId;
+    btn.classList.toggle('active',isActive);
+    btn.classList.toggle('mix-primary',isActive && btn.dataset.mode==='mix');
+  });
+}
+
+function go(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('s-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  $('nav-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='home'){
+    const best=localStorage.getItem('allin_best_mix');
+    if(best!==null){$('bestBox').classList.remove('hidden');$('bestVal').textContent=best+' / 10';}
+    else $('bestBox').classList.add('hidden');
+  }
+  if(name==='quiz'){
+    // Показываем экран выбора режимов только если викторина не запущена
+    const isPlaying=!$('quizPlay').classList.contains('hidden');
+    const isDone=!$('quizDone').classList.contains('hidden');
+    if(!isPlaying && !isDone){
+      $('quizIntro').classList.remove('hidden');
+      buildModes();
+    }
+  }
+}
+
+function quizBack(){
+  const isPlaying=!$('quizPlay').classList.contains('hidden');
+  const isDone=!$('quizDone').classList.contains('hidden');
+  if(isPlaying || isDone){
+    // Возврат на экран выбора режимов, забег сохраняется в памяти
+    $('quizPlay').classList.add('hidden');
+    $('quizDone').classList.add('hidden');
+    $('quizIntro').classList.remove('hidden');
+    buildModes();
+    window.scrollTo(0,0);
+  }else{
+    // Уже на экране выбора режимов — идём на главную
+    go('home');
+  }
+}
+
+
+function openLearn(){li=0;renderSlide();go('learn');}
+
+function renderSlide(){
+  const s=SLIDES[li];let html='<h2>'+s.t+'</h2>';
+  if(s.h)html+='<p>'+s.h+'</p>';
+  if(s.tl)html+='<ul class="timeline">'+s.tl.map(x=>'<li>'+x.split(' — ')[0]+' — <span class="mut">'+x.split(' — ').slice(1).join(' — ')+'</span></li>').join('')+'</ul>';
+  if(s.dl)html+='<ul class="deflist">'+s.dl.map(x=>'<li><b>'+x[0]+'</b> — <span class="mut">'+x[1]+'</span></li>').join('')+'</ul>';
+  if(s.rk)html+='<ol class="ranks">'+s.rk.map(x=>'<li>'+x+'</li>').join('')+'</ol>';
+  if(s.cta)html+='<button class="btn" style="margin-top:16px" onclick="startQuiz()">К викторине</button>';
+  const box=$('slideBox');box.innerHTML=html;
+  box.classList.remove('slide');void box.offsetWidth;box.classList.add('slide');
+  $('dots').innerHTML=SLIDES.map((_,i)=>'<span class="dot'+(i===li?' on':'')+'"></span>').join('');
+  $('prevBtn').style.visibility=li===0?'hidden':'visible';
+  $('fwdBtn').textContent=li===SLIDES.length-1?'К викторине':'Дальше';
+}
+function slide(d){
+  if(d===1&&li===SLIDES.length-1){startQuiz();return;}
+  li=Math.min(SLIDES.length-1,Math.max(0,li+d));renderSlide();
+}
+
+// Анимации карт
+
+function animateQuestionTransition(direction='next'){
+  const card=$('qCard');
+  if(!card) return;
+  
+  // Улетающая карточка
+  const tilt=(Math.random()*4+2) * (direction==='next'?-1:1);
+  card.style.transition='transform .2s ease-in, opacity .2s ease-in';
+  card.style.transform=`translateX(-300px) rotate(${tilt}deg)`;
+  card.style.opacity='0';
+  
+  setTimeout(()=>{
+    // Сброс позиции
+    card.style.transition='none';
+    card.style.transform='translateX(300px) rotate(5deg)';
+    card.style.opacity='0';
+    
+    // Плавное появление
+    requestAnimationFrame(()=>{
+      card.style.transition='transform .25s ease-out, opacity .25s ease-out';
+      card.style.transform='translateX(0) rotate(0deg)';
+      card.style.opacity='1';
+    });
+  }, 200);
+}
+
+function animateFanCards(){
+  // Проверяем prefers-reduced-motion
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(prefersReducedMotion) return;
+  
+  // Создаём fixed-оверлей на уровне body
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;opacity:1';
+  document.body.appendChild(overlay);
+  
+  // Блокируем скролл на время анимации
+  document.body.classList.add('scroll-locked');
+  
+  const suits = ['♠', '♥', '♦', '♣', '♠'];
+  const colors = ['#1a1a1a', '#e03131', '#e03131', '#1a1a1a', '#1a1a1a'];
+  
+  // Финальные позиции веера
+  const offsetsX = [-120, -60, 0, 60, 120];
+  const rotations = [-16, -8, 0, 8, 16];
+  
+  const cardDuration = 700; // мс
+  const cardDelay = 130; // мс между картами
+  
+  // Позиция центра веера
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight * 0.75;
+  
+  suits.forEach((suit, i) => {
+    const card = document.createElement('div');
+    
+    // Финальное состояние карты в базовых инлайн-стилях
+    const finalTransform = `translate(${offsetsX[i]}px, 0) rotate(${rotations[i]}deg)`;
+    card.style.cssText = `
+      position:absolute;
+      width:64px;
+      height:92px;
+      background:#ffffff;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      font-size:28px;
+      color:${colors[i]};
+      box-shadow:0 0 18px rgba(240,101,149,.45);
+      left:${centerX - 32}px;
+      top:${centerY - 46}px;
+      transform:${finalTransform};
+      opacity:1;
+    `;
+    
+    card.textContent = suit;
+    overlay.appendChild(card);
+    
+    // Анимация через Web Animations API: ОТ стартового состояния К финальному
+    card.animate([
+      { 
+        transform: `translateY(45vh) rotate(0deg)`,
+        opacity: 0
+      },
+      { 
+        opacity: 1,
+        offset: 0.14 // 100мс из 700мс ≈ 14%
+      },
+      { 
+        transform: finalTransform,
+        opacity: 1
+      }
+    ], {
+      duration: cardDuration,
+      delay: i * cardDelay,
+      easing: 'cubic-bezier(.2,.8,.2,1)',
+      fill: 'both'
+    });
+  });
+  
+  // Жизненный цикл оверлея:
+  // 1. Все карты прилетели: cardDelay * (n-1) + cardDuration
+  // 2. Веер держится неподвижно: 1000мс
+  // 3. Оверлей растворяется: 400мс
+  // 4. Удаляется через 100мс
+  const cardsArrivalTime = cardDelay * (suits.length - 1) + cardDuration;
+  const holdTime = 1000;
+  const fadeOutTime = 400;
+  const removeDelay = 100;
+  
+  const fadeOutStart = cardsArrivalTime + holdTime;
+  const totalDuration = fadeOutStart + fadeOutTime + removeDelay;
+  
+  // Растворение оверлея
+  setTimeout(() => {
+    overlay.animate([
+      { opacity: 1 },
+      { opacity: 0 }
+    ], {
+      duration: fadeOutTime,
+      fill: 'forwards'
+    });
+  }, fadeOutStart);
+  
+  // Удаление оверлея и разблокировка скролла
+  setTimeout(() => {
+    if (overlay.parentNode) {
+      overlay.remove();
+    }
+    document.body.classList.remove('scroll-locked');
+  }, totalDuration);
+}
+
+function startQuiz(){
+  let pool;
+  if(currentMode==='mix'){
+    pool=shuffle([...BANK]).slice(0,10);
+  }else if(currentMode==='marathon'){
+    pool=shuffle([...BANK]);
+  }else if(currentMode==='mistakes'){
+    const mistakes=getMistakes();
+    // Защита: если ошибок нет, переключиться на "mix"
+    if(mistakes.length===0){
+      currentMode='mix';
+      pool=shuffle([...BANK]).slice(0,10);
+    }else{
+      pool=shuffle(BANK.filter(q=>mistakes.includes(q.q)));
+    }
+  }
+  quiz.items=pool.map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
+  quiz.idx=0;quiz.score=0;quiz.answered=false;
+  
+  // Сразу переключаем экраны и рендерим первый вопрос
+  $('quizIntro').classList.add('hidden');
+  $('quizDone').classList.add('hidden');
+  $('quizPlay').classList.remove('hidden');
+  renderQ();
+}
+function renderQ(){
+  const q=quiz.items[quiz.idx];quiz.answered=false;
+  $('qNum').textContent='Вопрос '+(quiz.idx+1)+' / '+quiz.items.length;
+  $('qScore').textContent='Очки: '+quiz.score;
+  $('qBar').style.width=(quiz.idx/quiz.items.length*100)+'%';
+  $('qTag').textContent=q.c||'Холдем';
+  $('qText').textContent=q.q;
+  $('qOpts').innerHTML=q.opts.map((o,i)=>'<button class="opt" onclick="answer(this,'+i+')">'+o.t+'</button>').join('');
+  $('qExplain').classList.add('hidden');$('nextBtn').classList.add('hidden');
+  const card=$('qCard');card.style.animation='none';void card.offsetWidth;card.style.animation='';
+}
+function answer(btn,i){
+  if(quiz.answered)return;quiz.answered=true;
+  const q=quiz.items[quiz.idx],btns=[...$('qOpts').children];
+  btns.forEach(b=>b.disabled=true);
+  if(q.opts[i].ok){
+    btn.classList.add('correct');quiz.score++;
+    removeMistake(q.q);
+  }else{
+    btn.classList.add('wrong');btns[q.opts.findIndex(o=>o.ok)].classList.add('correct');
+    addMistake(q.q);
+  }
+  $('qScore').textContent='Очки: '+quiz.score;
+  const ex=$('qExplain');ex.innerHTML='<b>Коротко:</b> '+q.e;ex.classList.remove('hidden');
+  const nb=$('nextBtn');nb.textContent=quiz.idx===quiz.items.length-1?'Результаты':'Дальше';nb.classList.remove('hidden');
+}
+function nextQ(){
+  quiz.idx++;
+  if(quiz.idx>=quiz.items.length){
+    finish();
+  }else{
+    // Сначала рендерим следующий вопрос
+    renderQ();
+    // Анимация перехода между вопросами (декоративная)
+    animateQuestionTransition('next');
+  }
+}
+function finish(){
+  $('quizPlay').classList.add('hidden');$('quizDone').classList.remove('hidden');
+  const s=quiz.score;
+  const total=quiz.items.length;
+  const pct=Math.round(s/total*100);
+  $('dScore').textContent=s+' / '+total;
+  const ranks=[[100,'Мастер стола','Идеальный результат! Вы знаете холдем лучше большинства за этим столом.'],
+    [70,'Любитель холдема','Отличный результат — клуб может вами гордиться.'],
+    [40,'Уверенный любитель','Хорошая база! Ещё пара вечеров практики — и вы регуляр.'],
+    [0,'Начинающий игрок','Отличное начало! Перечитайте основы и возвращайтесь за реваншем.']];
+  const r=ranks.find(x=>pct>=x[0]);
+  $('dRank').textContent=r[1];$('dMsg').textContent=r[2];
+  const bestKey='allin_best_'+currentMode;
+  const best=+localStorage.getItem(bestKey)||0;
+  if(s>best){localStorage.setItem(bestKey,s);$('recBadge').classList.remove('hidden');}
+  else $('recBadge').classList.add('hidden');
+  
+  // Анимация веера карт и конфетти (декоративные, не блокируют интерфейс)
+  animateFanCards();
+  
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(pct>=70 && !prefersReducedMotion)confetti();
+  if(currentMode==='mistakes'){
+    const remaining=getMistakes().length;
+    const mr=$('mistakesResult');
+    mr.classList.remove('hidden');
+    if(remaining===0){
+      mr.innerHTML='<div class="mistakes-result all-clear">Все ошибки разобраны. Молодец!</div>';
+    }else{
+      mr.innerHTML='<div class="mistakes-result">Осталось разобрать ошибок: <b>'+remaining+'</b></div>';
+    }
+  }else{
+    $('mistakesResult').classList.add('hidden');
+  }
+  buildModes();
+  
+  // Показываем/скрываем кнопку "Работа над ошибками" на экране результатов
+  const mistakes=getMistakes();
+  const mistakesBtn=$('mistakesBtn');
+  if(mistakes.length>0){
+    mistakesBtn.classList.remove('hidden');
+    $('mistakesBtnCount').textContent=mistakes.length+' вопрос'+(mistakes.length===1?'':'ов');
+  }else{
+    mistakesBtn.classList.add('hidden');
+  }
+  
+  window.scrollTo(0,0);
+}
+
+function startMistakesMode(){
+  currentMode='mistakes';
+  startQuiz();
+}
+
+function confetti(){
+  const box=document.createElement('div');box.className='confetti';document.body.appendChild(box);
+  const sym=['♠','♥','♦','♣'],col=['#f06595','#c2255c','#ffffff','#ffa8c5'];
+  for(let i=0;i<36;i++){
+    const sp=document.createElement('span');
+    sp.textContent=sym[Math.floor(Math.random()*4)];
+    sp.style.left=Math.random()*100+'vw';
+    sp.style.fontSize=(13+Math.random()*15)+'px';
+    sp.style.color=col[Math.floor(Math.random()*4)];
+    sp.style.animationDuration=(2.4+Math.random()*2)+'s';
+    sp.style.animationDelay=(Math.random()*.8)+'s';
+    box.appendChild(sp);
+  }
+  setTimeout(()=>box.remove(),5200);
+}
+buildModes();
+go('home');
+</script>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
