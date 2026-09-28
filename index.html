@@ -159,6 +159,11 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 .nav-btn.active{background:linear-gradient(135deg,var(--pink),var(--pink2)); color:#fff; font-weight:800}
 
 /* Карты - анимации */
+.card-overlay{
+  position:fixed; inset:0; z-index:100; 
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
 .card-scene{position:relative; width:100%; min-height:200px; perspective:1000px; margin:20px 0}
 .card{
   position:absolute; width:80px; height:112px; 
@@ -274,7 +279,6 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
       <div class="label" style="text-align:left">Режим игры</div>
       <div id="modeList"></div>
       <div id="noMistakesMsg" class="no-mistakes-msg hidden">Ошибок нет — идеально!</div>
-      <div id="startCardScene" class="card-scene hidden"></div>
       <button class="btn-soft" style="margin-top:14px" onclick="startQuiz()">Начать</button>
     </div>
   </div>
@@ -496,10 +500,15 @@ function slide(d){
 
 // Анимации карт
 function animateStartCards(){
-  const scene=$('startCardScene');
-  if(!scene) return Promise.resolve();
-  scene.classList.remove('hidden');
-  scene.innerHTML='';
+  // Проверяем prefers-reduced-motion
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(prefersReducedMotion) return Promise.resolve();
+  
+  // Создаём оверлей на уровне body
+  const overlay = document.createElement('div');
+  overlay.className = 'card-overlay';
+  overlay.id = 'cardAnimationOverlay';
+  document.body.appendChild(overlay);
   
   const suits=['♠','♥'];
   const colors=['#000','#e03131'];
@@ -513,7 +522,7 @@ function animateStartCards(){
         <div class="card-face card-back"></div>
         <div class="card-face card-front" style="color:${colors[i]}">${suit}</div>
       `;
-      scene.appendChild(card);
+      overlay.appendChild(card);
       
       // Переворот карты после прилёта
       setTimeout(()=>{
@@ -521,11 +530,11 @@ function animateStartCards(){
       }, 500 + i*120);
     });
     
-    // Завершение анимации через 700мс
+    // Завершение анимации через 800мс (700мс анимация + 100мс запас)
     setTimeout(()=>{
-      scene.classList.add('hidden');
+      overlay.remove();
       resolve();
-    }, 700);
+    }, 800);
   });
 }
 
@@ -609,13 +618,16 @@ function startQuiz(){
   }
   quiz.items=pool.map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}));
   quiz.idx=0;quiz.score=0;quiz.answered=false;
-  $('quizIntro').classList.add('hidden');$('quizDone').classList.add('hidden');$('quizPlay').classList.remove('hidden');
-  go('quiz');
   
-  // Анимация стартовых карт
-  animateStartCards().then(()=>{
-    renderQ();
-  });
+  // Сразу переключаем экраны и рендерим первый вопрос
+  $('quizIntro').classList.add('hidden');
+  $('quizDone').classList.add('hidden');
+  $('quizPlay').classList.remove('hidden');
+  go('quiz');
+  renderQ();
+  
+  // Анимация стартовых карт проигрывается параллельно в оверлее
+  animateStartCards();
 }
 function renderQ(){
   const q=quiz.items[quiz.idx];quiz.answered=false;
