@@ -162,73 +162,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 /* Блокировка скролла во время анимации */
 body.scroll-locked{overflow:hidden}
 
-/* Оверлей веера карт */
-.fan-overlay{
-  position:fixed; inset:0; z-index:50;
-  pointer-events:none; overflow:hidden;
-}
-
-/* Веер карт на экране результатов */
-.fan-card{
-  position:absolute; width:70px; height:98px;
-  transform-style:preserve-3d; opacity:0;
-  filter:drop-shadow(0 0 18px rgba(240,101,149,.45));
-  will-change:transform, opacity;
-}
-.fan-card-inner{
-  position:relative; width:100%; height:100%;
-  transform-style:preserve-3d;
-  animation:fanReveal .8s cubic-bezier(.2,.8,.2,1) forwards;
-  will-change:transform, opacity;
-}
-.card-face{
-  position:absolute; width:100%; height:100%; 
-  backface-visibility:hidden; border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 4px 16px rgba(0,0,0,.3);
-}
-.card-back{
-  background:linear-gradient(135deg,#f06595,#c2255c);
-  transform:rotateY(0deg);
-}
-.card-back::after{
-  content:'♠'; font-size:28px; color:#fff; opacity:.9;
-}
-.card-front{
-  background:#fff; transform:rotateY(180deg);
-  font-size:22px; font-weight:800;
-}
-
-@keyframes fanReveal{
-  0%{opacity:0; transform:translateY(100vh) rotateY(180deg) scale(.6)}
-  60%{opacity:1}
-  100%{opacity:1; transform:translateY(0) rotateY(0deg) scale(1)}
-}
-
-/* Вспышка символа масти */
-.suit-flash{
-  position:absolute; left:50%; top:40%;
-  transform:translate(-50%,-50%) scale(.6);
-  font-size:120px; color:var(--pink);
-  opacity:0; pointer-events:none;
-  animation:suitFlash .6s ease-out forwards;
-  z-index:10;
-}
-
-@keyframes suitFlash{
-  0%{opacity:0; transform:translate(-50%,-50%) scale(.6)}
-  30%{opacity:.7}
-  100%{opacity:0; transform:translate(-50%,-50%) scale(1)}
-}
-
-/* Поддержка prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce){
-  .fan-card, .fan-card-inner, .suit-flash{
-    animation:none !important;
-  }
-  .fan-card{opacity:1}
-  .suit-flash{display:none}
-}
+/* Веер карт - все стили задаются инлайн через Web Animations API */
 </style>
 </head>
 <body>
@@ -541,81 +475,79 @@ function animateFanCards(){
   
   // Создаём fixed-оверлей на уровне body
   const overlay = document.createElement('div');
-  overlay.className = 'fan-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
   document.body.appendChild(overlay);
   
   // Блокируем скролл на время анимации
   document.body.classList.add('scroll-locked');
   
-  const cards=[
-    {suit:'♠',color:'#000'},
-    {suit:'♥',color:'#e03131'},
-    {suit:'♦',color:'#e03131'},
-    {suit:'♣',color:'#000'},
-    {suit:'♠',color:'#000'}
-  ];
+  const suits = ['♠', '♥', '♦', '♣', '♠'];
+  const colors = ['#1a1a1a', '#e03131', '#e03131', '#1a1a1a', '#1a1a1a'];
   
-  const angles=[-20,-10,0,10,20];
-  const interval=140; // мс между картами
+  // Финальные позиции веера
+  const offsetsX = [-120, -60, 0, 60, 120];
+  const rotations = [-16, -8, 0, 8, 16];
   
-  // Позиция веера: нижняя треть экрана, по центру
+  const cardDuration = 700; // мс
+  const cardDelay = 130; // мс между картами
+  
+  // Позиция центра веера
   const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight * 0.75; // 75% от высоты экрана
+  const centerY = window.innerHeight * 0.75;
   
-  cards.forEach((card,i)=>{
-    const el=document.createElement('div');
-    el.className='fan-card';
+  suits.forEach((suit, i) => {
+    const card = document.createElement('div');
     
-    const inner=document.createElement('div');
-    inner.className='fan-card-inner';
-    inner.style.animationDelay=(i*interval)+'ms';
-    inner.innerHTML=`
-      <div class="card-face card-back"></div>
-      <div class="card-face card-front" style="color:${card.color}">${card.suit}</div>
+    // Инлайн-стили карты
+    card.style.cssText = `
+      position:absolute;
+      width:64px;
+      height:92px;
+      background:#ffffff;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      font-size:28px;
+      color:${colors[i]};
+      box-shadow:0 0 18px rgba(240,101,149,.45);
+      left:${centerX - 32}px;
+      top:${centerY - 46}px;
+      opacity:0;
     `;
-    el.appendChild(inner);
     
-    // Позиционируем карту абсолютно в центре веера
-    el.style.left = centerX + 'px';
-    el.style.top = centerY + 'px';
-    el.style.marginLeft = '-35px'; // половина ширины карты
-    el.style.marginTop = '-49px';  // половина высоты карты
+    card.textContent = suit;
+    overlay.appendChild(card);
     
-    // Финальный поворот веера
-    const finalTransform=`rotate(${angles[i]}deg) translateX(${(i-2)*18}px)`;
-    el.style.transform=finalTransform;
-    
-    overlay.appendChild(el);
-    
-    // Переворот карты после прилёта
-    setTimeout(()=>{
-      inner.style.transition='transform .5s cubic-bezier(.2,.8,.2,1)';
-      inner.style.transform='rotateY(180deg)';
-    }, 800 + i*interval);
+    // Анимация через Web Animations API
+    const animation = card.animate([
+      { 
+        transform: `translateY(45vh) rotate(0deg)`,
+        opacity: 0
+      },
+      { 
+        opacity: 1,
+        offset: 0.14 // 100мс из 700мс ≈ 14%
+      },
+      { 
+        transform: `translate(${offsetsX[i]}px, 0) rotate(${rotations[i]}deg)`,
+        opacity: 1
+      }
+    ], {
+      duration: cardDuration,
+      delay: i * cardDelay,
+      easing: 'cubic-bezier(.2,.8,.2,1)',
+      fill: 'both'
+    });
   });
   
-  // Вспышка символа ♠ после сборки веера
-  const totalDuration = 800 + (cards.length-1)*interval + 500;
-  setTimeout(()=>{
-    const flash=document.createElement('div');
-    flash.className='suit-flash';
-    flash.textContent='♠';
-    overlay.appendChild(flash);
-    
-    // Удаляем вспышку после анимации
-    setTimeout(()=>{
-      if(flash.parentNode) flash.remove();
-    }, 600);
-  }, totalDuration);
-  
-  // Удаляем оверлей и разблокируем скролл после завершения анимации
-  const overlayDuration = totalDuration + 600 + 200; // длительность + вспышка + запас
-  setTimeout(()=>{
-    if(overlay.parentNode){
+  // Удаляем оверлей после завершения последней карты + 200мс
+  const totalDuration = cardDuration + (suits.length - 1) * cardDelay + 200;
+  setTimeout(() => {
+    if (overlay.parentNode) {
       overlay.remove();
     }
     document.body.classList.remove('scroll-locked');
-  }, overlayDuration);
+  }, totalDuration);
 }
 
 function startQuiz(){
