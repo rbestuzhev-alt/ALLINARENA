@@ -192,7 +192,6 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
       <div class="label" style="text-align:left">Режим игры</div>
       <div id="modeList"></div>
       <div id="noMistakesMsg" class="no-mistakes-msg hidden">Ошибок нет — идеально!</div>
-      <button class="btn hidden" id="resumeBtn" style="margin-top:14px;background:linear-gradient(135deg,#51cf66,#37b24d);box-shadow:0 8px 24px rgba(55,178,77,.35)" onclick="resumeQuiz()">▶ Продолжить забег</button>
       <button class="btn" style="margin-top:14px" onclick="startQuiz()">Начать</button>
     </div>
   </div>
@@ -343,14 +342,6 @@ function buildModes(){
   
   // Надпись "Ошибок нет — идеально!" больше не показываем
   $('noMistakesMsg').classList.add('hidden');
-  
-  // Показываем кнопку "Продолжить забег" если есть незавершённый забег
-  const hasActiveRun=quiz.items.length>0 && quiz.idx<quiz.items.length;
-  if(hasActiveRun){
-    $('resumeBtn').classList.remove('hidden');
-  }else{
-    $('resumeBtn').classList.add('hidden');
-  }
 }
 
 function selectMode(modeId){
@@ -399,13 +390,7 @@ function quizBack(){
   }
 }
 
-function resumeQuiz(){
-  $('quizIntro').classList.add('hidden');
-  $('quizDone').classList.add('hidden');
-  $('quizPlay').classList.remove('hidden');
-  renderQ();
-  window.scrollTo(0,0);
-}
+
 function openLearn(){li=0;renderSlide();go('learn');}
 
 function renderSlide(){
