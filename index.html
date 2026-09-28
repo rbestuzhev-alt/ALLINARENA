@@ -158,21 +158,22 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 .nav-btn svg{width:20px; height:20px}
 .nav-btn.active{background:linear-gradient(135deg,var(--pink),var(--pink2)); color:#fff; font-weight:800}
 
-/* Карты - анимации */
-.card-overlay{
-  position:fixed; inset:0; z-index:100; 
-  display:flex; align-items:center; justify-content:center;
-  pointer-events:none;
+/* Веер карт на экране результатов */
+.fan-container{position:relative; width:100%; height:160px; margin:20px 0; perspective:1000px; pointer-events:none}
+.fan-card{
+  position:absolute; width:70px; height:98px; left:50%; top:50%;
+  margin-left:-35px; margin-top:-49px;
+  transform-style:preserve-3d; opacity:0;
+  filter:drop-shadow(0 0 18px rgba(240,101,149,.45));
 }
-.card-scene{position:relative; width:100%; min-height:200px; perspective:1000px; margin:20px 0}
-.card{
-  position:absolute; width:80px; height:112px; 
-  transform-style:preserve-3d; transition:transform .4s ease-out, opacity .3s ease;
-  left:50%; top:50%; margin-left:-40px; margin-top:-56px;
+.fan-card-inner{
+  position:relative; width:100%; height:100%;
+  transform-style:preserve-3d;
+  animation:fanReveal .8s cubic-bezier(.2,.8,.2,1) forwards;
 }
 .card-face{
   position:absolute; width:100%; height:100%; 
-  backface-visibility:hidden; border-radius:12px;
+  backface-visibility:hidden; border-radius:10px;
   display:flex; align-items:center; justify-content:center;
   box-shadow:0 4px 16px rgba(0,0,0,.3);
 }
@@ -181,48 +182,42 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
   transform:rotateY(0deg);
 }
 .card-back::after{
-  content:'♠'; font-size:32px; color:#fff; opacity:.9;
+  content:'♠'; font-size:28px; color:#fff; opacity:.9;
 }
 .card-front{
   background:#fff; transform:rotateY(180deg);
-  font-size:24px; font-weight:800;
+  font-size:22px; font-weight:800;
 }
-.card.flipped{transform:rotateY(180deg)}
-.card.fly-in{animation:cardFlyIn .5s ease-out forwards}
-.card.fly-out{animation:cardFlyOut .3s ease-in forwards}
-
-@keyframes cardFlyIn{
-  0%{transform:translate(200px,-300px) rotate(45deg); opacity:0}
-  100%{transform:translate(0,0) rotate(0deg); opacity:1}
-}
-@keyframes cardFlyOut{
-  0%{transform:translate(0,0) rotate(0deg); opacity:1}
-  100%{transform:translate(-300px,0) rotate(-15deg); opacity:0}
-}
-
-/* Веер карт на экране результатов */
-.fan-container{position:relative; width:100%; height:140px; margin:20px 0; perspective:1000px}
-.fan-card{
-  position:absolute; width:60px; height:84px; left:50%; top:50%;
-  margin-left:-30px; margin-top:-42px;
-  transform-style:preserve-3d; opacity:0;
-  animation:fanReveal .4s ease-out forwards;
-}
-.fan-card .card-face{border-radius:8px; font-size:18px}
-.fan-card .card-back::after{font-size:24px}
 
 @keyframes fanReveal{
-  0%{opacity:0; transform:rotateY(180deg) scale(.8)}
-  100%{opacity:1; transform:rotateY(0deg) scale(1)}
+  0%{opacity:0; transform:translateY(100vh) rotateY(180deg) scale(.6)}
+  60%{opacity:1}
+  100%{opacity:1; transform:translateY(0) rotateY(0deg) scale(1)}
+}
+
+/* Вспышка символа масти */
+.suit-flash{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%) scale(.6);
+  font-size:120px; color:var(--pink);
+  opacity:0; pointer-events:none;
+  animation:suitFlash .6s ease-out forwards;
+  z-index:10;
+}
+
+@keyframes suitFlash{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.6)}
+  30%{opacity:.7}
+  100%{opacity:0; transform:translate(-50%,-50%) scale(1)}
 }
 
 /* Поддержка prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce){
-  .card, .card.fly-in, .card.fly-out, .fan-card{
-    animation:none !important; transition:none !important;
+  .fan-card, .fan-card-inner, .suit-flash{
+    animation:none !important;
   }
-  .card.flipped{transform:rotateY(180deg)}
   .fan-card{opacity:1}
+  .suit-flash{display:none}
 }
 </style>
 </head>
@@ -504,42 +499,6 @@ function slide(d){
 }
 
 // Анимации карт
-function animateStartCards(){
-  // Проверяем prefers-reduced-motion
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(prefersReducedMotion) return;
-  
-  // Создаём оверлей на уровне body
-  const overlay = document.createElement('div');
-  overlay.className = 'card-overlay';
-  document.body.appendChild(overlay);
-  
-  const suits=['♠','♥'];
-  const colors=['#000','#e03131'];
-  
-  suits.forEach((suit,i)=>{
-    const card=document.createElement('div');
-    card.className='card fly-in';
-    card.style.animationDelay=(i*120)+'ms';
-    card.innerHTML=`
-      <div class="card-face card-back"></div>
-      <div class="card-face card-front" style="color:${colors[i]}">${suit}</div>
-    `;
-    overlay.appendChild(card);
-    
-    // Переворот карты после прилёта
-    setTimeout(()=>{
-      card.classList.add('flipped');
-    }, 500 + i*120);
-  });
-  
-  // Удаляем оверлей через setTimeout (длительность анимации 700мс + 150мс запас)
-  setTimeout(()=>{
-    if(overlay.parentNode){
-      overlay.remove();
-    }
-  }, 850);
-}
 
 function animateQuestionTransition(direction='next'){
   const card=$('qCard');
@@ -567,6 +526,10 @@ function animateQuestionTransition(direction='next'){
 }
 
 function animateFanCards(){
+  // Проверяем prefers-reduced-motion
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(prefersReducedMotion) return;
+  
   const container=$('fanContainer');
   if(!container) return;
   container.innerHTML='';
@@ -580,24 +543,47 @@ function animateFanCards(){
   ];
   
   const angles=[-20,-10,0,10,20];
+  const interval=140; // мс между картами
   
   cards.forEach((card,i)=>{
     const el=document.createElement('div');
     el.className='fan-card';
-    el.style.animationDelay=(i*80)+'ms';
-    el.style.transform=`rotate(${angles[i]}deg) translateX(${(i-2)*15}px)`;
-    el.innerHTML=`
+    
+    const inner=document.createElement('div');
+    inner.className='fan-card-inner';
+    inner.style.animationDelay=(i*interval)+'ms';
+    inner.innerHTML=`
       <div class="card-face card-back"></div>
       <div class="card-face card-front" style="color:${card.color}">${card.suit}</div>
     `;
+    el.appendChild(inner);
+    
+    // Финальный поворот веера
+    const finalTransform=`rotate(${angles[i]}deg) translateX(${(i-2)*18}px)`;
+    el.style.transform=finalTransform;
+    
     container.appendChild(el);
     
-    // Переворот после появления
+    // Переворот карты после прилёта
     setTimeout(()=>{
-      el.style.transition='transform .3s ease-out';
-      el.style.transform=`rotate(${angles[i]}deg) translateX(${(i-2)*15}px) rotateY(180deg)`;
-    }, 400 + i*80);
+      inner.style.transition='transform .5s cubic-bezier(.2,.8,.2,1)';
+      inner.style.transform='rotateY(180deg)';
+    }, 800 + i*interval);
   });
+  
+  // Вспышка символа ♠ после сборки веера
+  const totalDuration = 800 + (cards.length-1)*interval + 500;
+  setTimeout(()=>{
+    const flash=document.createElement('div');
+    flash.className='suit-flash';
+    flash.textContent='♠';
+    container.appendChild(flash);
+    
+    // Удаляем вспышку после анимации
+    setTimeout(()=>{
+      if(flash.parentNode) flash.remove();
+    }, 600);
+  }, totalDuration);
 }
 
 function startQuiz(){
@@ -624,9 +610,6 @@ function startQuiz(){
   $('quizDone').classList.add('hidden');
   $('quizPlay').classList.remove('hidden');
   renderQ();
-  
-  // Анимация стартовых карт проигрывается параллельно в оверлее (декоративная)
-  animateStartCards();
 }
 function renderQ(){
   const q=quiz.items[quiz.idx];quiz.answered=false;
@@ -682,10 +665,11 @@ function finish(){
   if(s>best){localStorage.setItem(bestKey,s);$('recBadge').classList.remove('hidden');}
   else $('recBadge').classList.add('hidden');
   
-  // Анимация веера карт
+  // Анимация веера карт и конфетти (декоративные, не блокируют интерфейс)
   animateFanCards();
   
-  if(pct>=70)confetti();
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(pct>=70 && !prefersReducedMotion)confetti();
   if(currentMode==='mistakes'){
     const remaining=getMistakes().length;
     const mr=$('mistakesResult');
