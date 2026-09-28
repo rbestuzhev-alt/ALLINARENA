@@ -146,6 +146,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 .done p{color:var(--mut); line-height:1.6; max-width:320px; margin:0 auto 22px}
 .record{display:inline-block; margin-bottom:10px; font-size:12px; text-transform:uppercase; letter-spacing:.15em;
   color:#ffd43b; animation:pop .5s ease}
+.confetti{position:fixed; inset:0; z-index:60; pointer-events:none; overflow:hidden}
 .confetti span{position:fixed; top:-24px; z-index:60; pointer-events:none; animation:fall linear forwards}
 .hidden{display:none!important}
 
@@ -158,18 +159,27 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 .nav-btn svg{width:20px; height:20px}
 .nav-btn.active{background:linear-gradient(135deg,var(--pink),var(--pink2)); color:#fff; font-weight:800}
 
+/* Блокировка скролла во время анимации */
+body.scroll-locked{overflow:hidden}
+
+/* Оверлей веера карт */
+.fan-overlay{
+  position:fixed; inset:0; z-index:50;
+  pointer-events:none; overflow:hidden;
+}
+
 /* Веер карт на экране результатов */
-.fan-container{position:relative; width:100%; height:160px; margin:20px 0; perspective:1000px; pointer-events:none}
 .fan-card{
-  position:absolute; width:70px; height:98px; left:50%; top:50%;
-  margin-left:-35px; margin-top:-49px;
+  position:absolute; width:70px; height:98px;
   transform-style:preserve-3d; opacity:0;
   filter:drop-shadow(0 0 18px rgba(240,101,149,.45));
+  will-change:transform, opacity;
 }
 .fan-card-inner{
   position:relative; width:100%; height:100%;
   transform-style:preserve-3d;
   animation:fanReveal .8s cubic-bezier(.2,.8,.2,1) forwards;
+  will-change:transform, opacity;
 }
 .card-face{
   position:absolute; width:100%; height:100%; 
@@ -197,7 +207,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 
 /* Вспышка символа масти */
 .suit-flash{
-  position:absolute; left:50%; top:50%;
+  position:absolute; left:50%; top:40%;
   transform:translate(-50%,-50%) scale(.6);
   font-size:120px; color:var(--pink);
   opacity:0; pointer-events:none;
@@ -295,7 +305,6 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
     <div class="big" id="dScore"></div>
     <h2 id="dRank"></h2>
     <p id="dMsg"></p>
-    <div id="fanContainer" class="fan-container"></div>
     <div id="mistakesResult" class="hidden"></div>
     <button class="btn" onclick="startQuiz()">Пройти ещё раз</button>
     <div style="height:10px"></div>
@@ -530,9 +539,13 @@ function animateFanCards(){
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(prefersReducedMotion) return;
   
-  const container=$('fanContainer');
-  if(!container) return;
-  container.innerHTML='';
+  // Создаём fixed-оверлей на уровне body
+  const overlay = document.createElement('div');
+  overlay.className = 'fan-overlay';
+  document.body.appendChild(overlay);
+  
+  // Блокируем скролл на время анимации
+  document.body.classList.add('scroll-locked');
   
   const cards=[
     {suit:'♠',color:'#000'},
@@ -544,6 +557,10 @@ function animateFanCards(){
   
   const angles=[-20,-10,0,10,20];
   const interval=140; // мс между картами
+  
+  // Позиция веера: нижняя треть экрана, по центру
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight * 0.75; // 75% от высоты экрана
   
   cards.forEach((card,i)=>{
     const el=document.createElement('div');
@@ -558,11 +575,17 @@ function animateFanCards(){
     `;
     el.appendChild(inner);
     
+    // Позиционируем карту абсолютно в центре веера
+    el.style.left = centerX + 'px';
+    el.style.top = centerY + 'px';
+    el.style.marginLeft = '-35px'; // половина ширины карты
+    el.style.marginTop = '-49px';  // половина высоты карты
+    
     // Финальный поворот веера
     const finalTransform=`rotate(${angles[i]}deg) translateX(${(i-2)*18}px)`;
     el.style.transform=finalTransform;
     
-    container.appendChild(el);
+    overlay.appendChild(el);
     
     // Переворот карты после прилёта
     setTimeout(()=>{
@@ -577,13 +600,22 @@ function animateFanCards(){
     const flash=document.createElement('div');
     flash.className='suit-flash';
     flash.textContent='♠';
-    container.appendChild(flash);
+    overlay.appendChild(flash);
     
     // Удаляем вспышку после анимации
     setTimeout(()=>{
       if(flash.parentNode) flash.remove();
     }, 600);
   }, totalDuration);
+  
+  // Удаляем оверлей и разблокируем скролл после завершения анимации
+  const overlayDuration = totalDuration + 600 + 200; // длительность + вспышка + запас
+  setTimeout(()=>{
+    if(overlay.parentNode){
+      overlay.remove();
+    }
+    document.body.classList.remove('scroll-locked');
+  }, overlayDuration);
 }
 
 function startQuiz(){
