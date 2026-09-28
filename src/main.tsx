@@ -1,6 +1,2 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App.tsx";
-
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+// Entry point for Vite — no React rendering needed,
+// all content is served directly from index.html.
