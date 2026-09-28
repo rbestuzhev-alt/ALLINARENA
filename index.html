@@ -100,8 +100,13 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
 .opt.wrong{background:rgba(250,82,82,.12); border-color:var(--bad); animation:shake .4s}
 .mode-btn{display:block; width:100%; text-align:left; padding:14px 16px; border-radius:16px; font-family:inherit; font-size:15px;
   background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--text); cursor:pointer; margin-bottom:10px; transition:.15s}
-.mode-btn:hover:not(:disabled):not(.mix-primary){border-color:rgba(230,73,128,.5); transform:translateY(-1px)}
-.mode-btn.active{background:rgba(230,73,128,.07); border-color:var(--pink)}
+.mode-btn:hover:not(:disabled):not(.mix-primary){border-color:rgba(230,73,128,.5); transform:translateY(-1px); background:rgba(230,73,128,.07)}
+.mode-btn.active{background:rgba(230,73,128,.07); border-color:rgba(230,73,128,.5)}
+.btn-soft{width:100%; border:1px solid var(--line); border-radius:18px; padding:16px; cursor:pointer; font-family:inherit;
+  font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:.07em; font-size:14px;
+  background:var(--card); color:var(--pink); transition:transform .15s, border-color .2s, background .2s}
+.btn-soft:hover{filter:brightness(1.08); transform:translateY(-1px); border-color:rgba(230,73,128,.5); background:rgba(230,73,128,.07)}
+.btn-soft:active{transform:scale(.97)}
 .mode-btn.active.mix-primary{
   background:linear-gradient(135deg,#f06595,#c2255c,#f06595);
   background-size:200% 200%;
@@ -207,7 +212,7 @@ h1{margin:10px 0 4px; font-style:italic; font-weight:800; text-transform:upperca
       <div class="label" style="text-align:left">Режим игры</div>
       <div id="modeList"></div>
       <div id="noMistakesMsg" class="no-mistakes-msg hidden">Ошибок нет — идеально!</div>
-      <button class="btn" style="margin-top:14px" onclick="startQuiz()">Начать</button>
+      <button class="btn-soft" style="margin-top:14px" onclick="startQuiz()">Начать</button>
     </div>
   </div>
 
