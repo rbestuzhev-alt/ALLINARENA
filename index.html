@@ -422,9 +422,12 @@ function buildModes(){
     let classes='mode-btn';
     if(isActive) classes+=' active';
     if(isMixPrimary) classes+=' mix-primary';
+    const countText = m.id === 'mix' 
+      ? m.count + ' случайных вопросов'
+      : m.count + ' вопрос' + (m.count === 1 ? '' : 'ов');
     return '<button class="'+classes+'" data-mode="'+m.id+'" onclick="selectMode(\''+m.id+'\')">'+
       '<div class="mode-title">'+m.title+badge+'</div>'+
-      '<div class="mode-count">'+m.count+' вопрос'+(m.count===1?'':'ов')+'</div>'+
+      '<div class="mode-count">'+countText+'</div>'+
     '</button>';
   }).join('');
   
