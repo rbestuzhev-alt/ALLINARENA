@@ -475,7 +475,7 @@ function animateFanCards(){
   
   // Создаём fixed-оверлей на уровне body
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+  overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;opacity:1';
   document.body.appendChild(overlay);
   
   // Блокируем скролл на время анимации
@@ -498,7 +498,8 @@ function animateFanCards(){
   suits.forEach((suit, i) => {
     const card = document.createElement('div');
     
-    // Инлайн-стили карты
+    // Финальное состояние карты в базовых инлайн-стилях
+    const finalTransform = `translate(${offsetsX[i]}px, 0) rotate(${rotations[i]}deg)`;
     card.style.cssText = `
       position:absolute;
       width:64px;
@@ -512,14 +513,15 @@ function animateFanCards(){
       box-shadow:0 0 18px rgba(240,101,149,.45);
       left:${centerX - 32}px;
       top:${centerY - 46}px;
-      opacity:0;
+      transform:${finalTransform};
+      opacity:1;
     `;
     
     card.textContent = suit;
     overlay.appendChild(card);
     
-    // Анимация через Web Animations API
-    const animation = card.animate([
+    // Анимация через Web Animations API: ОТ стартового состояния К финальному
+    card.animate([
       { 
         transform: `translateY(45vh) rotate(0deg)`,
         opacity: 0
@@ -529,7 +531,7 @@ function animateFanCards(){
         offset: 0.14 // 100мс из 700мс ≈ 14%
       },
       { 
-        transform: `translate(${offsetsX[i]}px, 0) rotate(${rotations[i]}deg)`,
+        transform: finalTransform,
         opacity: 1
       }
     ], {
@@ -540,8 +542,31 @@ function animateFanCards(){
     });
   });
   
-  // Удаляем оверлей после завершения последней карты + 200мс
-  const totalDuration = cardDuration + (suits.length - 1) * cardDelay + 200;
+  // Жизненный цикл оверлея:
+  // 1. Все карты прилетели: cardDelay * (n-1) + cardDuration
+  // 2. Веер держится неподвижно: 1000мс
+  // 3. Оверлей растворяется: 400мс
+  // 4. Удаляется через 100мс
+  const cardsArrivalTime = cardDelay * (suits.length - 1) + cardDuration;
+  const holdTime = 1000;
+  const fadeOutTime = 400;
+  const removeDelay = 100;
+  
+  const fadeOutStart = cardsArrivalTime + holdTime;
+  const totalDuration = fadeOutStart + fadeOutTime + removeDelay;
+  
+  // Растворение оверлея
+  setTimeout(() => {
+    overlay.animate([
+      { opacity: 1 },
+      { opacity: 0 }
+    ], {
+      duration: fadeOutTime,
+      fill: 'forwards'
+    });
+  }, fadeOutStart);
+  
+  // Удаление оверлея и разблокировка скролла
   setTimeout(() => {
     if (overlay.parentNode) {
       overlay.remove();
