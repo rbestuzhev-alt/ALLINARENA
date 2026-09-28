@@ -453,11 +453,13 @@ function go(name){
     else $('bestBox').classList.add('hidden');
   }
   if(name==='quiz'){
-    // Всегда показываем экран выбора режимов при переходе на викторину
-    $('quizIntro').classList.remove('hidden');
-    $('quizPlay').classList.add('hidden');
-    $('quizDone').classList.add('hidden');
-    buildModes();
+    // Показываем экран выбора режимов только если викторина не запущена
+    const isPlaying=!$('quizPlay').classList.contains('hidden');
+    const isDone=!$('quizDone').classList.contains('hidden');
+    if(!isPlaying && !isDone){
+      $('quizIntro').classList.remove('hidden');
+      buildModes();
+    }
   }
 }
 
@@ -502,68 +504,63 @@ function slide(d){
 function animateStartCards(){
   // Проверяем prefers-reduced-motion
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(prefersReducedMotion) return Promise.resolve();
+  if(prefersReducedMotion) return;
   
   // Создаём оверлей на уровне body
   const overlay = document.createElement('div');
   overlay.className = 'card-overlay';
-  overlay.id = 'cardAnimationOverlay';
   document.body.appendChild(overlay);
   
   const suits=['♠','♥'];
   const colors=['#000','#e03131'];
   
-  return new Promise(resolve=>{
-    suits.forEach((suit,i)=>{
-      const card=document.createElement('div');
-      card.className='card fly-in';
-      card.style.animationDelay=(i*120)+'ms';
-      card.innerHTML=`
-        <div class="card-face card-back"></div>
-        <div class="card-face card-front" style="color:${colors[i]}">${suit}</div>
-      `;
-      overlay.appendChild(card);
-      
-      // Переворот карты после прилёта
-      setTimeout(()=>{
-        card.classList.add('flipped');
-      }, 500 + i*120);
-    });
+  suits.forEach((suit,i)=>{
+    const card=document.createElement('div');
+    card.className='card fly-in';
+    card.style.animationDelay=(i*120)+'ms';
+    card.innerHTML=`
+      <div class="card-face card-back"></div>
+      <div class="card-face card-front" style="color:${colors[i]}">${suit}</div>
+    `;
+    overlay.appendChild(card);
     
-    // Завершение анимации через 800мс (700мс анимация + 100мс запас)
+    // Переворот карты после прилёта
     setTimeout(()=>{
-      overlay.remove();
-      resolve();
-    }, 800);
+      card.classList.add('flipped');
+    }, 500 + i*120);
   });
+  
+  // Удаляем оверлей через setTimeout (длительность анимации 700мс + 150мс запас)
+  setTimeout(()=>{
+    if(overlay.parentNode){
+      overlay.remove();
+    }
+  }, 850);
 }
 
 function animateQuestionTransition(direction='next'){
   const card=$('qCard');
-  if(!card) return Promise.resolve();
+  if(!card) return;
   
-  return new Promise(resolve=>{
-    // Улетающая карточка
-    const tilt=(Math.random()*4+2) * (direction==='next'?-1:1);
-    card.style.transition='transform .2s ease-in, opacity .2s ease-in';
-    card.style.transform=`translateX(-300px) rotate(${tilt}deg)`;
+  // Улетающая карточка
+  const tilt=(Math.random()*4+2) * (direction==='next'?-1:1);
+  card.style.transition='transform .2s ease-in, opacity .2s ease-in';
+  card.style.transform=`translateX(-300px) rotate(${tilt}deg)`;
+  card.style.opacity='0';
+  
+  setTimeout(()=>{
+    // Сброс позиции
+    card.style.transition='none';
+    card.style.transform='translateX(300px) rotate(5deg)';
     card.style.opacity='0';
     
-    setTimeout(()=>{
-      // Сброс позиции
-      card.style.transition='none';
-      card.style.transform='translateX(300px) rotate(5deg)';
-      card.style.opacity='0';
-      
-      // Плавное появление
-      requestAnimationFrame(()=>{
-        card.style.transition='transform .25s ease-out, opacity .25s ease-out';
-        card.style.transform='translateX(0) rotate(0deg)';
-        card.style.opacity='1';
-        setTimeout(resolve, 250);
-      });
-    }, 200);
-  });
+    // Плавное появление
+    requestAnimationFrame(()=>{
+      card.style.transition='transform .25s ease-out, opacity .25s ease-out';
+      card.style.transform='translateX(0) rotate(0deg)';
+      card.style.opacity='1';
+    });
+  }, 200);
 }
 
 function animateFanCards(){
@@ -623,10 +620,9 @@ function startQuiz(){
   $('quizIntro').classList.add('hidden');
   $('quizDone').classList.add('hidden');
   $('quizPlay').classList.remove('hidden');
-  go('quiz');
   renderQ();
   
-  // Анимация стартовых карт проигрывается параллельно в оверлее
+  // Анимация стартовых карт проигрывается параллельно в оверлее (декоративная)
   animateStartCards();
 }
 function renderQ(){
@@ -660,10 +656,10 @@ function nextQ(){
   if(quiz.idx>=quiz.items.length){
     finish();
   }else{
-    // Анимация перехода между вопросами
-    animateQuestionTransition('next').then(()=>{
-      renderQ();
-    });
+    // Сначала рендерим следующий вопрос
+    renderQ();
+    // Анимация перехода между вопросами (декоративная)
+    animateQuestionTransition('next');
   }
 }
 function finish(){
